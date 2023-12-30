@@ -13,6 +13,10 @@ use function base64_decode;
 use const PHP_BASE32_ASCII;
 use const PHP_BASE32_HEX;
 
+/**
+ * @see https://opensource.apple.com/source/tcl/tcl-87/tcl_ext/tcllib/tcllib/modules/base32/base32hex.testsuite.auto.html
+ * @see https://opensource.apple.com/source/tcl/tcl-87/tcl_ext/tcllib/tcllib/modules/base32/base32.testsuite.auto.html
+ */
 final class Base32Test extends TestCase
 {
     /**
@@ -58,6 +62,12 @@ final class Base32Test extends TestCase
             'RFC Vector 4' => ['foob', 'CPNMUOG='],
             'RFC Vector 5' => ['fooba', 'CPNMUOJ1'],
             'RFC Vector 6' => ['foobar', 'CPNMUOJ1E8======'],
+            'Old Vector 1' => [' ', '40======'],
+            'Old Vector 2' => ['  ', '40G0===='],
+            'Old Vector 3' => ['   ', '40G20==='],
+            'Old Vector 4' => ['    ', '40G2080='],
+            'Old Vector 5' => ['     ', '40G20810'],
+            'Old Vector 6' => ['      ', '40G2081040======'],
         ],
     ];
 
