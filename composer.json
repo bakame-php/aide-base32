@@ -1,0 +1,43 @@
+{
+    "name": "bakame/aide-base32",
+    "description": "base32 encoding and decoding using functions or class in PHP",
+    "type": "library",
+    "keywords": ["base32", "encoding", "decoding", "RFC4648"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name" : "Ignace Nyamagana Butera",
+            "email" : "nyamsprod@gmail.com",
+            "homepage" : "https://github.com/nyamsprod/",
+            "role" : "Developer"
+        }
+    ],
+    "support": {
+        "docs": "https://github.com/bakame-php/aide",
+        "issues": "https://github.com/bakame-php/aide",
+        "source": "https://github.com/bakame-php/aide"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/nyamsprod"
+        }
+    ],
+    "require": {
+        "php" : "^8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bakame\\Aide\\Base32\\": ""
+        },
+        "files": ["functions.php"]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-develop": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
