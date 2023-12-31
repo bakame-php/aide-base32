@@ -41,7 +41,7 @@ enum Base32: string
     }
 
     /**
-     * @return array<string, int>
+     * @return array<array-key, int>
      */
     private function mapping(): array
     {

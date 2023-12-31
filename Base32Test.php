@@ -20,25 +20,9 @@ use const PHP_BASE32_HEX;
 final class Base32Test extends TestCase
 {
     /**
-     * Strings to test back and forth encoding/decoding to make sure results are the same.
-     *
-     * @var array<string,string>
-     */
-    private const BASE_CLEAR_STRINGS = [
-        'Empty String' => [''],
-        'Ten' => ['10'],
-        'Test130' => ['test130'],
-        'test' => ['test'],
-        'Eight' => ['8'],
-        'Zero' => ['0'],
-        'Equals' => ['='],
-        'Foobar' => ['foobar'],
-    ];
-
-    /**
      * Vectors from RFC with cleartext => base32 pairs.
      *
-     * @var array<string,string>
+     * @var array<string, array<string, array<string>>>
      */
     private const RFC_VECTORS = [
         'ASCII' => [
@@ -72,14 +56,14 @@ final class Base32Test extends TestCase
     ];
 
     /**
-     * @return array<string, array>
+     * @return array<string, array{0:string|false, 1:string}>
      */
     public static function base32decodeAsciiDataProvider(): array
     {
         $decodedData = [
             'Empty String' => ['', ''],
             'All Invalid Characters' => ['', '8908908908908908'],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs='), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
             'Partial zero edge case' => ['8', 'HA======'],
         ];
 
@@ -87,13 +71,13 @@ final class Base32Test extends TestCase
     }
 
     /**
-     * @return array<string, array>
+     * @return array<string, array{0:string|false, 1:string}>
      */
     public static function base32encodeAsciiDataProvider(): array
     {
         $encodeData = [
             'Empty String' => ['', ''],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs='), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
             'Partial zero edge case' => ['8', 'HA======'],
         ];
 
@@ -103,35 +87,44 @@ final class Base32Test extends TestCase
     /**
      * Back and forth encoding must return the same result.
      *
-     * @return array<string, array>
+     * @return array<string, array<string>>
      */
     public static function backAndForthDataProvider(): array
     {
-        return self::BASE_CLEAR_STRINGS;
+        return [
+            'Empty String' => [''],
+            'Ten' => ['10'],
+            'Test130' => ['test130'],
+            'test' => ['test'],
+            'Eight' => ['8'],
+            'Zero' => ['0'],
+            'Equals' => ['='],
+            'Foobar' => ['foobar'],
+        ];
     }
 
     /**
-     * @return array<string, array>
+     * @return array<string, array{0: string|false, 1: string}>
      */
     public static function base32decodeHexDataProvider(): array
     {
         $decodedData = [
             'Empty String' => ['', ''],
             'All Invalid Characters' => ['', 'WXYXWXYZWXYZWXYZ'],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs='), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
         ];
 
         return [...$decodedData, ...self::RFC_VECTORS['HEX']];
     }
 
     /**
-     * @return array<string, array>
-     */
+     * @return array<string, array{0: string|false, 1: string}>
+     **/
     public static function base32encodeHexDataProvider(): array
     {
         $encodeData = [
             'Empty String' => ['', ''],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs='), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
         ];
 
         return [...$encodeData, ...self::RFC_VECTORS['HEX']];
@@ -195,7 +188,7 @@ final class Base32Test extends TestCase
     }
 
     /**
-     * @return iterable<string, array{sequence: string, message: string, sequence: int<1, 2>}>
+     * @return iterable<string, array{sequence: string, message: string, encoding: int}>
      */
     public static function invalidDecodingSequence(): iterable
     {
