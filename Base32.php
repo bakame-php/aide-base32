@@ -19,10 +19,10 @@ use function unpack;
  *
  * Based on https://github.com/ChristianRiesen/base32/blob/master/src/Base32.php class
  */
-enum Base32: string
+enum Base32
 {
-    case Ascii = 'ascii';
-    case Hex = 'hex';
+    case Ascii;
+    case Hex;
 
     private function alphabet(): string
     {
