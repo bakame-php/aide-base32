@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Bakame\Aide\Base32\Base32;
+use Bakame\Aide\Base32\Base32Exception;
 
 defined('PHP_BASE32_ASCII') || define('PHP_BASE32_ASCII', 1);
 defined('PHP_BASE32_HEX') || define('PHP_BASE32_HEX', 2);
@@ -33,7 +34,7 @@ if (!function_exists('base32_decode')) {
 
         try {
             return $base32->decode($encoded);
-        } catch (Throwable) {
+        } catch (Base32Exception) {
             return false;
         }
     }
