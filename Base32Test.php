@@ -19,13 +19,68 @@ use const PHP_BASE32_HEX;
  */
 final class Base32Test extends TestCase
 {
+    #[DataProvider('base32encodeAsciiDataProvider')]
+    #[Test]
+    public function it_will_base32_encode_on_ascii_mode(string $decoded, string $encoded): void
+    {
+        self::assertSame($encoded, base32_encode($decoded));
+    }
+
+    #[DataProvider('base32encodeHexDataProvider')]
+    #[Test]
+    public function it_will_base32_encode_on_hex_mode(string $decoded, string $encoded): void
+    {
+        self::assertSame($encoded, base32_encode($decoded, PHP_BASE32_HEX));
+    }
+
+    #[DataProvider('base32decodeAsciiDataProvider')]
+    #[Test]
+    public function it_will_base32_decode_on_ascii_mode(string $decoded, string $encoded): void
+    {
+        self::assertSame($decoded, base32_decode($encoded));
+    }
+
+    #[DataProvider('base32decodeHexDataProvider')]
+    #[Test]
+    public function it_will_base32_decode_on_hex_mode(string $decoded, string $encoded): void
+    {
+        self::assertSame($decoded, base32_decode($encoded, PHP_BASE32_HEX));
+    }
+
+    #[DataProvider('backAndForthDataProvider')]
+    #[Test]
+    public function it_will_base32_encode_and_decode(string $string): void
+    {
+        self::assertSame($string, base32_decode(base32_encode($string)));
+        self::assertSame($string, base32_decode(base32_encode($string, PHP_BASE32_HEX), PHP_BASE32_HEX));
+    }
+
+    #[DataProvider('invalidDecodingSequence')]
+    #[Test]
+    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, int $encoding): void
+    {
+        self::assertFalse(base32_decode($sequence, $encoding, true));
+    }
+
+    #[DataProvider('invalidDecodingSequence')]
+    #[Test]
+    public function it_will_throw_from_invalid_encoded_string_with_base32_decode_method_on_strict_mode(string $sequence, string $message, int $encoding): void
+    {
+        $this->expectException(Base32Exception::class);
+        $this->expectExceptionMessage($message);
+
+        match ($encoding) {
+            PHP_BASE32_HEX => Base32::Hex->decode($sequence),
+            default => Base32::Ascii->decode($sequence),
+        };
+    }
+
     /**
-     * Vectors from RFC with cleartext => base32 pairs.
-     *
-     * @var array<string, array<string, array<string>>>
+     * @return array<string, array{0:string|false, 1:string}>
      */
-    private const RFC_VECTORS = [
-        'ASCII' => [
+    public static function base32encodeAsciiDataProvider(): array
+    {
+        return [
             'RFC Vector 1' => ['f', 'MY======'],
             'RFC Vector 2' => ['fo', 'MZXQ===='],
             'RFC Vector 3' => ['foo', 'MZXW6==='],
@@ -38,8 +93,29 @@ final class Base32Test extends TestCase
             'Old Vector 4' => ['    ', 'EAQCAIA='],
             'Old Vector 5' => ['     ', 'EAQCAIBA'],
             'Old Vector 6' => ['      ', 'EAQCAIBAEA======'],
-        ],
-        'HEX' => [
+            'Empty String' => ['', ''],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
+            'Partial zero edge case' => ['8', 'HA======'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{0:string|false, 1:string}>
+     */
+    public static function base32decodeAsciiDataProvider(): array
+    {
+        return [
+            ...self::base32encodeAsciiDataProvider(),
+            'All Invalid Characters' => ['', '8908908908908908'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{0: string|false, 1: string}>
+     **/
+    public static function base32encodeHexDataProvider(): array
+    {
+        return [
             'RFC Vector 1' => ['f', 'CO======'],
             'RFC Vector 2' => ['fo', 'CPNG===='],
             'RFC Vector 3' => ['foo', 'CPNMU==='],
@@ -52,36 +128,20 @@ final class Base32Test extends TestCase
             'Old Vector 4' => ['    ', '40G2080='],
             'Old Vector 5' => ['     ', '40G20810'],
             'Old Vector 6' => ['      ', '40G2081040======'],
-        ],
-    ];
-
-    /**
-     * @return array<string, array{0:string|false, 1:string}>
-     */
-    public static function base32decodeAsciiDataProvider(): array
-    {
-        $decodedData = [
             'Empty String' => ['', ''],
-            'All Invalid Characters' => ['', '8908908908908908'],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
-            'Partial zero edge case' => ['8', 'HA======'],
+            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
         ];
-
-        return [...$decodedData, ...self::RFC_VECTORS['ASCII']];
     }
 
     /**
-     * @return array<string, array{0:string|false, 1:string}>
+     * @return array<string, array{0: string|false, 1: string}>
      */
-    public static function base32encodeAsciiDataProvider(): array
+    public static function base32decodeHexDataProvider(): array
     {
-        $encodeData = [
-            'Empty String' => ['', ''],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), 'DYGEDF2ZBHRMULUH4EFUJAPG74PTETOP3SBDBZUIENZCKH6NEX5Q===='],
-            'Partial zero edge case' => ['8', 'HA======'],
+        return [
+            ...self::base32encodeHexDataProvider(),
+            'All Invalid Characters' => ['', 'WXYXWXYZWXYZWXYZ'],
         ];
-
-        return [...$encodeData, ...self::RFC_VECTORS['ASCII']];
     }
 
     /**
@@ -101,90 +161,6 @@ final class Base32Test extends TestCase
             'Equals' => ['='],
             'Foobar' => ['foobar'],
         ];
-    }
-
-    /**
-     * @return array<string, array{0: string|false, 1: string}>
-     */
-    public static function base32decodeHexDataProvider(): array
-    {
-        $decodedData = [
-            'Empty String' => ['', ''],
-            'All Invalid Characters' => ['', 'WXYXWXYZWXYZWXYZ'],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
-        ];
-
-        return [...$decodedData, ...self::RFC_VECTORS['HEX']];
-    }
-
-    /**
-     * @return array<string, array{0: string|false, 1: string}>
-     **/
-    public static function base32encodeHexDataProvider(): array
-    {
-        $encodeData = [
-            'Empty String' => ['', ''],
-            'Random Integers' => [base64_decode('HgxBl1kJ4souh+ELRIHm/x8yTc/cgjDmiCNyJR/NJfs=', true), '3O6435QP17HCKBK7S45K90F6VSFJ4JEFRI131PK84DP2A7UD4NTG===='],
-        ];
-
-        return [...$encodeData, ...self::RFC_VECTORS['HEX']];
-    }
-
-    #[DataProvider('base32decodeAsciiDataProvider')]
-    #[Test]
-    public function it_will_base32_decode_on_ascii_mode(string $clear, string $base32): void
-    {
-        self::assertEquals($clear, base32_decode($base32));
-    }
-
-    #[DataProvider('base32encodeAsciiDataProvider')]
-    #[Test]
-    public function it_will_base32_encode_on_ascii_mode(string $clear, string $base32): void
-    {
-        self::assertEquals($base32, base32_encode($clear));
-    }
-
-    #[DataProvider('base32decodeHexDataProvider')]
-    #[Test]
-    public function it_will_base32_decode_on_hex_mode(string $clear, string $base32): void
-    {
-        self::assertEquals($clear, base32_decode($base32, PHP_BASE32_HEX));
-        self::assertEquals($clear, base32_decode($base32, PHP_BASE32_HEX, true));
-    }
-
-    #[DataProvider('base32encodeHexDataProvider')]
-    #[Test]
-    public function it_will_base32_encode_on_hex_mode(string $clear, string $base32): void
-    {
-        self::assertEquals($base32, base32_encode($clear, PHP_BASE32_HEX));
-    }
-
-    #[DataProvider('backAndForthDataProvider')]
-    #[Test]
-    public function it_will_base32_encode_and_decode(string $clear): void
-    {
-        self::assertEquals($clear, base32_decode(base32_encode($clear)));
-        self::assertEquals($clear, base32_decode(base32_encode($clear, PHP_BASE32_HEX), PHP_BASE32_HEX));
-    }
-
-    #[DataProvider('invalidDecodingSequence')]
-    #[Test]
-    public function it_will_throw_on_strict_mode_with_invalid_encoded_string_on_decode(string $sequence, string $message, int $encoding): void
-    {
-        $this->expectException(Base32Exception::class);
-        $this->expectExceptionMessage($message);
-
-        match ($encoding) {
-            PHP_BASE32_HEX => Base32::Hex->decodeOrFail($sequence),
-            default => Base32::Ascii->decodeOrFail($sequence),
-        };
-    }
-
-    #[DataProvider('invalidDecodingSequence')]
-    #[Test]
-    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, int $encoding): void
-    {
-        self::assertFalse(base32_decode($sequence, $encoding, true));
     }
 
     /**

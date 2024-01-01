@@ -27,23 +27,30 @@ The package provides a userland base32 encoding and decoding mechanism.
 You can either use the `Base32` Enumeration as shown below:
 
 ```php
+<?php
+
 use Bakame\Aide\Base32\Base32;
 
-Base32::Ascii->encode('Bangui');               // returns 'IJQW4Z3VNE======'
-Base32::Ascii->decode('IJQW4Z3VNE======');     // returns 'Bangui'
-Base32::Hex->encode('Bangui');                 // returns '89GMSPRLD4======'
-Base32::Hex->decodeOrFail('89GMSPRLD4======'); // returns 'Bangui'
+Base32::Ascii->encode('Bangui');                // returns 'IJQW4Z3VNE======'
+Base32::Ascii->decode('IJQW4Z3VNE======');      // returns 'Bangui'
+Base32::Ascii->decodeLax('IJQW4Z083VNE======'); // returns 'Bangui'
+Base32::Ascii->decode('IJQW4Z083VNE======');    // throws Base32Exception
+Base32::Hex->encode('Bangui');                  // returns '89GMSPRLD4======'
+Base32::Hex->decode('89GMSPRLD4======');        // returns 'Bangui'
 ```
 
 or use the equivalent functions in the default scope
 
 ```php
+<?php
 
-base32_encode('Bangui');                                  // returns 'IJQW4Z3VNE======'
-base32_decode('IJQW4Z3VNE======');                        // returns 'Bangui'
-base32_encode('Bangui', PHP_BASE32_HEX);                  // returns '89GMSPRLD4======'
-base32_decode('89GMSPRLD4======', PHP_BASE32_HEX, true);  // returns 'Bangui'
+base32_encode('Bangui');                                     // returns 'IJQW4Z3VNE======'
+base32_decode('IJQW4Z3VNE======');                           // returns 'Bangui'
+base32_decode('IJQW4Z083VNE======');                         // returns 'Bangui'
+base32_decode('IJQW4Z083VNE======', PHP_BASE32_ASCII, true); // throws Base32Exception
+base32_encode('Bangui', PHP_BASE32_HEX);                     // returns '89GMSPRLD4======'
+base32_decode('89GMSPRLD4======', PHP_BASE32_HEX, true);     // returns 'Bangui'
 ```
 
 In case of an error during decoding the `Base32` enumeration will throw a `Base23Exception` while
-the equivalent functions will simply return `false`;
+the equivalent functions will return `false`;

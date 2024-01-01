@@ -153,7 +153,7 @@ enum Base32
     /**
      * @throws Base32Exception if the encoded string is invalid
      */
-    public function decodeOrFail(string $encoded): string
+    public function decode(string $encoded): string
     {
         if ('' === $encoded) {
             return '';
@@ -179,10 +179,10 @@ enum Base32
             throw new Base32Exception('The encoded string contains characters outside of the base32 '.(Base32::Hex === $this ? 'Extended Hex' : 'US-ASCII').' alphabet.');
         }
 
-        return $this->decode($encoded);
+        return $this->decodeLax($encoded);
     }
 
-    public function decode(string $encoded): string
+    public function decodeLax(string $encoded): string
     {
         $encoded = strtoupper($encoded);
         $encoded = preg_replace($this->pattern(), '', $encoded);

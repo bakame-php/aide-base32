@@ -28,11 +28,11 @@ if (!function_exists('base32_decode')) {
         };
 
         if (!$strict) {
-            return $base32->decode($encoded);
+            return $base32->decodeLax($encoded);
         }
 
         try {
-            return $base32->decodeOrFail($encoded);
+            return $base32->decode($encoded);
         } catch (Throwable) {
             return false;
         }

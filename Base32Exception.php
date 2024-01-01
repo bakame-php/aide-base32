@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Bakame\Aide\Base32;
 
-use LogicException;
+use Exception;
 
-final class Base32Exception extends LogicException
+class Base32Exception extends Exception
 {
 }
