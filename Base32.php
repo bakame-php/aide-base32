@@ -67,44 +67,50 @@ final class Base32
     public static function decode(
         string $encoded,
         string $alphabet = self::ASCII,
-        string $padding = self::PADDING_CHARACTER
+        string $padding = self::PADDING_CHARACTER,
+        bool $strict = false
     ): string {
         if ('' === $encoded) {
             return '';
+        }
+
+        if (!$strict) {
+            $encoded = strtoupper($encoded);
         }
 
         if (strtoupper($encoded) !== $encoded) {
             throw new Base32Exception('The encoded string contains lower-cased characters which is forbidden on strict mode.');
         }
 
-        if (0 !== (strlen($encoded) % 8)) {
-            throw new Base32Exception('The encoded string length is not a multiple of 8.');
+        $remainder = strlen($encoded) % 8;
+        if (0 !== $remainder) {
+            if ($strict) {
+                throw new Base32Exception('The encoded string length is not a multiple of 8.');
+            }
+
+            $encoded .= str_repeat($padding, $remainder);
         }
 
         if (strspn($encoded, $alphabet.$padding) !== strlen($encoded)) {
-            throw new Base32Exception('The encoded string contains characters outside of the base32 alphabet.');
+            if ($strict) {
+                throw new Base32Exception('The encoded string contains characters outside of the base32 alphabet.');
+            }
+            $encoded = preg_replace('/[^'.preg_quote($alphabet.$padding, '/').']/', '', $encoded);
+            if ('' === $encoded || null === $encoded) {
+                return '';
+            }
         }
 
-        if (str_contains(rtrim($encoded, $padding), $padding)) {
-            throw new Base32Exception('A padding character is contained in the middle of the encoded string.');
+        $inside = rtrim($encoded, $padding);
+        if (str_contains($inside, $padding)) {
+            if ($strict) {
+                throw new Base32Exception('A padding character is contained in the middle of the encoded string.');
+            }
+            $encoded = str_replace($padding, '', $inside).substr($encoded, strlen($inside));
         }
 
-        if ('' !== $padding && 1 !== preg_match('/^[^'.$padding.']+(('.$padding.'){3,4}|('.$padding.'){6}|'.$padding.')?$/', $encoded)) {
+        if ($strict && '' !== $padding && 1 !== preg_match('/^[^'.$padding.']+(('.$padding.'){3,4}|('.$padding.'){6}|'.$padding.')?$/', $encoded)) {
             throw new Base32Exception('The encoded string contains an invalid padding length.');
-        }
-
-        return self::decodeLax($encoded, $alphabet, $padding);
-    }
-
-    public static function decodeLax(
-        string $encoded,
-        string $alphabet = self::ASCII,
-        string $padding = self::PADDING_CHARACTER
-    ): string {
-        $encoded = strtoupper($encoded);
-        $encoded = preg_replace('/[^'.preg_quote($alphabet, '/').$padding.']/', '', $encoded);
-        if ('' === $encoded || null === $encoded) {
-            return '';
         }
 
         $decoded = '';

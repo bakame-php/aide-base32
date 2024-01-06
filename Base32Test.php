@@ -70,8 +70,8 @@ final class Base32Test extends TestCase
         $this->expectExceptionMessage($message);
 
         match ($encoding) {
-            PHP_BASE32_HEX => Base32::decode($sequence, PHP_BASE32_HEX),
-            default => Base32::decode($sequence, PHP_BASE32_ASCII),
+            PHP_BASE32_HEX => Base32::decode($sequence, PHP_BASE32_HEX, '=', true),
+            default => Base32::decode($sequence, PHP_BASE32_ASCII, '=', true),
         };
     }
 
