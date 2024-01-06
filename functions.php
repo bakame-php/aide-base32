@@ -9,13 +9,7 @@ if (!function_exists('base32_encode')) {
     function base32_encode(
         string $decoded,
         string $alphabet = PHP_BASE32_ASCII,
-        bool $usePadding = true
     ): string {
-        $padding = '';
-        if ($usePadding) {
-            $padding = '=';
-        }
-
         if ('' === $decoded) {
             return '';
         }
@@ -27,6 +21,7 @@ if (!function_exists('base32_encode')) {
         $len = strlen($decoded);
         $decoded .= str_repeat(chr(0), 4);
         $chars = (array) unpack('C*', $decoded);
+        $padding = '=';
         $alphabet .= $padding;
 
         while ($n < $len || 0 !== $bitLen) {
@@ -50,14 +45,8 @@ if (!function_exists('base32_decode')) {
     function base32_decode(
         string $encoded,
         string $alphabet = PHP_BASE32_ASCII,
-        bool $usePadding = true,
         bool $strict = false
     ): string|false {
-        $padding = '';
-        if ($usePadding) {
-            $padding = '=';
-        }
-
         if ('' === $encoded) {
             return '';
         }
@@ -70,6 +59,7 @@ if (!function_exists('base32_decode')) {
             return false;
         }
 
+        $padding = '=';
         $remainder = strlen($encoded) % 8;
         if (0 !== $remainder) {
             if ($strict) {
@@ -97,7 +87,7 @@ if (!function_exists('base32_decode')) {
             $encoded = str_replace($padding, '', $inside).substr($encoded, strlen($inside));
         }
 
-        if ($strict && '' !== $padding && 1 !== preg_match('/^[^'.$padding.']+(('.$padding.'){3,4}|('.$padding.'){6}|'.$padding.')?$/', $encoded)) {
+        if ($strict && 1 !== preg_match('/^[^'.$padding.']+(('.$padding.'){3,4}|('.$padding.'){6}|'.$padding.')?$/', $encoded)) {
             return false;
         }
 

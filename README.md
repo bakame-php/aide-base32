@@ -3,7 +3,7 @@
 functions or class to allow encoding or decoding strings using [RFC4648](https://datatracker.ietf.org/doc/html/rfc4648) base32 algorithm.
 
 > [!CAUTION]  
-> Sub-split of Aide for Error.  
+> Sub-split of Aide for Base32.  
 > ⚠️ this is a sub-split, for pull requests and issues, visit: https://github.com/bakame-php/aide
 
 ## Installation
@@ -11,7 +11,7 @@ functions or class to allow encoding or decoding strings using [RFC4648](https:/
 ### Composer
 
 ~~~
-composer require bakame-php/aide-error
+composer require bakame-php/aide-base32
 ~~~
 
 ### System Requirements
@@ -24,22 +24,31 @@ You need:
 
 The package provides a userland base32 encoding and decoding mechanism.
 
-You can either use the `Base32` class as shown below:
-
 ```php
-<?php
-
-use Bakame\Aide\Base32\Base32;
-
-Base32::encode('Bangui');                       // returns 'IJQW4Z3VNE======'
-Base32::decode('IJQW4Z3VNE======');              // returns 'Bangui'
-Base32::decodeLax('IJQW4Z083VNE======');         // returns 'Bangui'
-Base32::decode('IJQW4Z083VNE======');            // throws Base32Exception
-Base32::encode('Bangui', Base32::HEX);           // returns '89GMSPRLD4======'
-Base32::decode('89GMSPRLD4======', Base32::HEX); // returns 'Bangui'
+base32_encode(string $string, string $alphabet = PHP_BASE32_ASCII): string
+base32_decode(string $string, string $alphabet = PHP_BASE32_ASCII, bool $strict = false): string
 ```
 
-or use the equivalent functions in the default scope
+#### Parameters:
+
+- `$string` : the data to encode for `base32_encode` or to decode for `base32_decode`
+- `$alphabet` : the base32 alphabet, by default `PHP_BASE_ASCII`. 
+
+If `$alphabet` is `PHP_BASE_ASCII`, conversion is performed per RFC4648 US-ASCII standard.
+If `$alphabet` is `PHP_BASE_HEXC`, conversion is performed per RFC4648 HEX standard.
+
+**You can provide your own alphabet of 32 characters.**
+
+- `$strict` : tell whether we need to perform strict decoding or not 
+
+If the strict parameter is set to `true` then the base32_decode() function will return `false`
+
+- if encoded sequence lenght is invalid
+- if the input contains character from outside the base64 alphabet. 
+- if padding is invalid
+- if encoded characters are not all uppercased
+
+otherwise listed constraints are silently ignored or discarded.
 
 ```php
 <?php
@@ -47,10 +56,7 @@ or use the equivalent functions in the default scope
 base32_encode('Bangui');                                     // returns 'IJQW4Z3VNE======'
 base32_decode('IJQW4Z3VNE======');                           // returns 'Bangui'
 base32_decode('IJQW4Z083VNE======');                         // returns 'Bangui'
-base32_decode('IJQW4Z083VNE======', PHP_BASE32_ASCII, '=', true); // throws Base32Exception
-base32_encode('Bangui', PHP_BASE32_HEX);                          // returns '89GMSPRLD4======'
-base32_decode('89GMSPRLD4======', PHP_BASE32_HEX, '=', true);     // returns 'Bangui'
+base32_decode('IJQW4Z083VNE======', PHP_BASE32_ASCII, true); // return false
+base32_encode('Bangui', PHP_BASE32_HEX);                     // returns '89GMSPRLD4======'
+base32_decode('89GMSPRLD4======', PHP_BASE32_HEX, true);     // returns 'Bangui'
 ```
-
-In case of an error during decoding the `Base32` enumeration will throw a `Base23Exception` while
-the equivalent functions will return `false`;

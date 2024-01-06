@@ -59,20 +59,7 @@ final class Base32Test extends TestCase
     #[Test]
     public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, string $encoding): void
     {
-        self::assertFalse(base32_decode($sequence, $encoding, true, true));
-    }
-
-    #[DataProvider('invalidDecodingSequence')]
-    #[Test]
-    public function it_will_throw_from_invalid_encoded_string_with_base32_decode_method_on_strict_mode(string $sequence, string $message, string $encoding): void
-    {
-        $this->expectException(Base32Exception::class);
-        $this->expectExceptionMessage($message);
-
-        match ($encoding) {
-            PHP_BASE32_HEX => Base32::decode($sequence, PHP_BASE32_HEX, '=', true),
-            default => Base32::decode($sequence, PHP_BASE32_ASCII, '=', true),
-        };
+        self::assertFalse(base32_decode($sequence, $encoding, true));
     }
 
     /**
