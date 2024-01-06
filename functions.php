@@ -5,35 +5,33 @@ declare(strict_types=1);
 use Bakame\Aide\Base32\Base32;
 use Bakame\Aide\Base32\Base32Exception;
 
-defined('PHP_BASE32_ASCII') || define('PHP_BASE32_ASCII', 1);
-defined('PHP_BASE32_HEX') || define('PHP_BASE32_HEX', 2);
+defined('PHP_BASE32_ASCII') || define('PHP_BASE32_ASCII', Base32::ASCII);
+defined('PHP_BASE32_HEX') || define('PHP_BASE32_HEX', Base32::HEX);
 
 if (!function_exists('base32_encode')) {
-    function base32_encode(string $decoded, int $encoding = PHP_BASE32_ASCII): string
-    {
-        $base32 = match ($encoding) {
-            PHP_BASE32_HEX => Base32::Hex,
-            default => Base32::Ascii,
-        };
-
-        return $base32->encode($decoded);
+    function base32_encode(
+        string $decoded,
+        string $alphabet = PHP_BASE32_ASCII,
+        bool $usePadding = true
+    ): string {
+        return Base32::encode($decoded, $alphabet, $usePadding ? Base32::PADDING_CHARACTER : '');
     }
 }
 
 if (!function_exists('base32_decode')) {
-    function base32_decode(string $encoded, int $encoding = PHP_BASE32_ASCII, bool $strict = false): string|false
-    {
-        $base32 = match ($encoding) {
-            PHP_BASE32_HEX => Base32::Hex,
-            default => Base32::Ascii,
-        };
+    function base32_decode(
+        string $encoded,
+        string $alphabet = PHP_BASE32_ASCII,
+        bool $usePadding = true,
+        bool $strict = false
+    ): string|false {
 
         if (!$strict) {
-            return $base32->decodeLax($encoded);
+            return Base32::decodeLax($encoded, $alphabet, $usePadding ? Base32::PADDING_CHARACTER : '');
         }
 
         try {
-            return $base32->decode($encoded);
+            return Base32::decode($encoded, $alphabet, $usePadding ? Base32::PADDING_CHARACTER : '');
         } catch (Base32Exception) {
             return false;
         }

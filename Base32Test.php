@@ -57,21 +57,21 @@ final class Base32Test extends TestCase
 
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
-    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, int $encoding): void
+    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, string $encoding): void
     {
-        self::assertFalse(base32_decode($sequence, $encoding, true));
+        self::assertFalse(base32_decode($sequence, $encoding, true, true));
     }
 
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
-    public function it_will_throw_from_invalid_encoded_string_with_base32_decode_method_on_strict_mode(string $sequence, string $message, int $encoding): void
+    public function it_will_throw_from_invalid_encoded_string_with_base32_decode_method_on_strict_mode(string $sequence, string $message, string $encoding): void
     {
         $this->expectException(Base32Exception::class);
         $this->expectExceptionMessage($message);
 
         match ($encoding) {
-            PHP_BASE32_HEX => Base32::Hex->decode($sequence),
-            default => Base32::Ascii->decode($sequence),
+            PHP_BASE32_HEX => Base32::decode($sequence, PHP_BASE32_HEX),
+            default => Base32::decode($sequence, PHP_BASE32_ASCII),
         };
     }
 
@@ -164,19 +164,19 @@ final class Base32Test extends TestCase
     }
 
     /**
-     * @return iterable<string, array{sequence: string, message: string, encoding: int}>
+     * @return iterable<string, array{sequence: string, message: string, encoding: string}>
      */
     public static function invalidDecodingSequence(): iterable
     {
         yield 'characters outside of base32 extended hex alphabet' => [
             'sequence' => 'MZXQ====',
-            'message' => 'The encoded string contains characters outside of the base32 Extended Hex alphabet.',
+            'message' => 'The encoded string contains characters outside of the base32 alphabet.',
             'encoding' => PHP_BASE32_HEX,
         ];
 
         yield 'characters outside of base32 us ascii alphabet' => [
             'sequence' => '90890808',
-            'message' => 'The encoded string contains characters outside of the base32 US-ASCII alphabet.',
+            'message' => 'The encoded string contains characters outside of the base32 alphabet.',
             'encoding' => PHP_BASE32_ASCII,
         ];
 
