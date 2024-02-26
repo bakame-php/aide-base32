@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use ValueError;
+
 use function base64_decode;
 
 use const PHP_BASE32_ASCII;
@@ -57,9 +59,18 @@ final class Base32Test extends TestCase
 
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
-    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(string $sequence, string $message, string $encoding): void
-    {
-        self::assertFalse(base32_decode($sequence, $encoding, '=', true));
+    public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(
+        string $sequence,
+        string $message,
+        string $alphabet,
+        string $padding
+    ): void {
+        try {
+            self::assertFalse(base32_decode($sequence, $alphabet, $padding, true));
+        } catch (ValueError $exception) {
+            self::assertSame($message, $exception->getMessage());
+        }
+
     }
 
     /**
@@ -151,44 +162,78 @@ final class Base32Test extends TestCase
     }
 
     /**
-     * @return iterable<string, array{sequence: string, message: string, encoding: string}>
+     * @return iterable<string, array{sequence: string, message: string, alphabet: string, padding:string}>
      */
     public static function invalidDecodingSequence(): iterable
     {
         yield 'characters outside of base32 extended hex alphabet' => [
             'sequence' => 'MZXQ====',
             'message' => 'The encoded string contains characters outside of the base32 alphabet.',
-            'encoding' => PHP_BASE32_HEX,
+            'alphabet' => PHP_BASE32_HEX,
+            'padding' => '=',
         ];
 
         yield 'characters outside of base32 us ascii alphabet' => [
             'sequence' => '90890808',
             'message' => 'The encoded string contains characters outside of the base32 alphabet.',
-            'encoding' => PHP_BASE32_ASCII,
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => '=',
         ];
 
         yield 'characters not upper-cased' => [
             'sequence' => 'MzxQ====',
             'message' => 'The encoded string contains lower-cased characters which is forbidden on strict mode.',
-            'encoding' => PHP_BASE32_ASCII,
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => '=',
         ];
 
         yield 'padding character in the middle of the sequence' => [
             'sequence' => 'A=ACA===',
             'message' => 'A padding character is contained in the middle of the encoded string.',
-            'encoding' => PHP_BASE32_ASCII,
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => '=',
         ];
 
         yield 'invalid padding length' => [
             'sequence' => 'A=======',
             'message' => 'The encoded string contains an invalid padding length.',
-            'encoding' => PHP_BASE32_ASCII,
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => '=',
         ];
 
         yield 'invalid encoded string length' => [
             'sequence' => 'A',
             'message' => 'The encoded string length is not a multiple of 8.',
-            'encoding' => PHP_BASE32_HEX,
+            'alphabet' => PHP_BASE32_HEX,
+            'padding' => '=',
+        ];
+
+        yield 'invalid alphabet length' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet must be 32 bytes long containing unique characters.',
+            'alphabet' => '1234567890asdfghjklzxcvbnm',
+            'padding' => '=',
+        ];
+
+        yield 'the padding character is contained within the alphabet' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet contains invalid characters.',
+            'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
+            'padding' => '*',
+        ];
+
+        yield 'the padding character is different than one byte' => [
+            'sequence' => 'A',
+            'message' => 'The padding character must be one byte long.',
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => 'yo',
+        ];
+
+        yield 'the padding character can not contain "\r"' => [
+            'sequence' => 'A',
+            'message' => 'The padding character is invalid.',
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => "\r",
         ];
     }
 }
