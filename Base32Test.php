@@ -51,8 +51,8 @@ final class Base32Test extends TestCase
     #[Test]
     public function it_will_base32_encode_and_decode(string $string): void
     {
-        self::assertSame($string, base32_decode((string) base32_encode($string)));
-        self::assertSame($string, base32_decode((string) base32_encode($string, PHP_BASE32_HEX), PHP_BASE32_HEX));
+        self::assertSame($string, base32_decode(base32_encode($string)));
+        self::assertSame($string, base32_decode(base32_encode($string, PHP_BASE32_HEX), PHP_BASE32_HEX));
     }
 
     #[DataProvider('invalidDecodingSequence')]

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Bakame\Aide\Base32;
 
+use RuntimeException;
+use ValueError;
+
 final class Base32
 {
     private function __construct(
@@ -11,15 +14,15 @@ final class Base32
         private readonly string $padding,
     ) {
         if (in_array($this->padding, ["\r", "\n"], true)) {
-            throw new \RuntimeException('The padding character is invalid.');
+            throw new ValueError('The padding character is invalid.');
         }
 
         if (1 !== strlen($this->padding)) {
-            throw new \RuntimeException('The padding character must be one byte long.');
+            throw new ValueError('The padding character must be one byte long.');
         }
 
         if (32 !== count(array_unique(str_split($alphabet)))) {
-            throw new \RuntimeException('The alphabet must be 32 bytes long containing unique characters.');
+            throw new ValueError('The alphabet must be 32 bytes long containing unique characters.');
         }
 
         if (
@@ -27,7 +30,7 @@ final class Base32
             str_contains($this->alphabet, "\n") ||
             str_contains($this->alphabet, $this->padding)
         ) {
-            throw new \RuntimeException('The alphabet contains invalid characters.');
+            throw new ValueError('The alphabet contains invalid characters.');
         }
     }
 
@@ -47,13 +50,13 @@ final class Base32
         }
 
         if (strtoupper($encoded) !== $encoded) {
-            throw new \RuntimeException('The encoded data contains non uppercased characters.');
+            throw new RuntimeException('The encoded data contains non uppercased characters.');
         }
 
         $remainder = strlen($encoded) % 8;
         if (0 !== $remainder) {
             if ($strict) {
-                throw new \RuntimeException('The encoded data length is invalid.');
+                throw new RuntimeException('The encoded data length is invalid.');
             }
 
             $encoded .= str_repeat($this->padding, $remainder);
@@ -62,7 +65,7 @@ final class Base32
         $characters = $this->alphabet.$this->padding;
         if (strspn($encoded, $characters) !== strlen($encoded)) {
             if ($strict) {
-                throw new \RuntimeException('The encoded data contains characters unknown to the alphabet.');
+                throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
             }
             $encoded = preg_replace('/[^'.preg_quote($characters, '/').']/', '', $encoded);
             if ('' === $encoded || null === $encoded) {
@@ -73,13 +76,13 @@ final class Base32
         $inside = rtrim($encoded, $this->padding);
         if (str_contains($inside, $this->padding)) {
             if ($strict) {
-                throw new \RuntimeException('The encoded data contains the padding characters.');
+                throw new RuntimeException('The encoded data contains the padding characters.');
             }
             $encoded = str_replace($this->padding, '', $inside).substr($encoded, strlen($inside));
         }
 
         if ($strict && 1 !== preg_match('/^[^'.$this->padding.']+(('.$this->padding.'){3,4}|('.$this->padding.'){6}|'.$this->padding.')?$/', $encoded)) {
-            throw new \RuntimeException('The encoded data contains the padding characters.');
+            throw new RuntimeException('The encoded data contains the padding characters.');
         }
 
         $decoded = '';

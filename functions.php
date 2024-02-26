@@ -12,12 +12,8 @@ if (!function_exists('base32_encode')) {
         string $decoded,
         string $alphabet = PHP_BASE32_ASCII,
         string $padding = '=',
-    ): string|false {
-        try {
-            return Base32::new($alphabet, $padding)->encode($decoded);
-        } catch (RuntimeException) {
-            return false;
-        }
+    ): string {
+        return Base32::new($alphabet, $padding)->encode($decoded);
     }
 }
 
