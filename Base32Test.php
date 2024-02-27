@@ -209,14 +209,14 @@ final class Base32Test extends TestCase
 
         yield 'invalid alphabet length' => [
             'sequence' => 'A',
-            'message' => 'The alphabet must be 32 bytes long containing unique characters.',
+            'message' => 'The alphabet must be 32 bytes long string containing unique characters.',
             'alphabet' => '1234567890asdfghjklzxcvbnm',
             'padding' => '=',
         ];
 
         yield 'the padding character is contained within the alphabet' => [
             'sequence' => 'A',
-            'message' => 'The alphabet contains invalid characters.',
+            'message' => 'The alphabet contains an invalid character.',
             'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
             'padding' => '*',
         ];
