@@ -57,6 +57,17 @@ final class Base32Test extends TestCase
         self::assertSame($string, base32_decode(base32_encode($string, PHP_BASE32_HEX), PHP_BASE32_HEX));
     }
 
+    #[Test]
+    public function it_will_base32_decode_multiline_data(): void
+    {
+        $base32 = <<<BASE
+89GMSPRL
+D4yyyyyy
+BASE;
+        self::assertSame('Bangui', base32_decode($base32, PHP_BASE32_HEX, 'y', true));
+    }
+
+
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
     public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(
@@ -209,35 +220,42 @@ final class Base32Test extends TestCase
 
         yield 'invalid alphabet length' => [
             'sequence' => 'A',
-            'message' => 'The alphabet must be 32 bytes long string containing unique characters.',
+            'message' => 'The alphabet must be a 32 bytes long string.',
             'alphabet' => '1234567890asdfghjklzxcvbnm',
             'padding' => '=',
         ];
 
         yield 'the padding character is contained within the alphabet' => [
             'sequence' => 'A',
-            'message' => 'The alphabet contains an invalid character.',
+            'message' => 'The alphabet can not contain the padding character.',
             'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
             'padding' => '*',
         ];
 
+        yield 'the padding character is contained within the alphabet is case insensitive' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet can not contain the padding character.',
+            'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
+            'padding' => 'a',
+        ];
+
         yield 'the padding character is different than one byte' => [
             'sequence' => 'A',
-            'message' => 'The padding character must be one byte long.',
+            'message' => 'The padding character must a single character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => 'yo',
         ];
 
         yield 'the padding character can not contain "\r"' => [
             'sequence' => 'A',
-            'message' => 'The padding character is invalid.',
+            'message' => 'The padding character can not be the carriage return character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\r",
         ];
 
         yield 'the padding character can not contain "\n"' => [
             'sequence' => 'A',
-            'message' => 'The padding character is invalid.',
+            'message' => 'The padding character can not be the newline escape sequence.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\n",
         ];

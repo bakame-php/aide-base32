@@ -10,32 +10,23 @@ use ValueError;
 final class Base32
 {
     private readonly string $alphabet;
+    private readonly string $padding;
 
-    private function __construct(
-        string $alphabet,
-        private readonly string $padding,
-    ) {
-        if (1 !== strlen($this->padding)) {
-            throw new ValueError('The padding character must be one byte long.');
-        }
+    private function __construct(string $alphabet, string $padding)
+    {
+        $alphabet = strtoupper($alphabet);
 
-        if (in_array($this->padding, ["\r", "\n"], true)) {
-            throw new ValueError('The padding character is invalid.');
-        }
-
-        if (32 !== count(array_unique(str_split($alphabet)))) {
-            throw new ValueError('The alphabet must be 32 bytes long string containing unique characters.');
-        }
-
-        if (
-            str_contains($alphabet, "\r") ||
-            str_contains($alphabet, "\n") ||
-            str_contains($alphabet, $this->padding)
-        ) {
-            throw new ValueError('The alphabet contains an invalid character.');
-        }
-
-        $this->alphabet = strtoupper($alphabet);
+        [$this->alphabet, $this->padding] = match (true) {
+            1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
+            "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
+            "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
+            32 !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
+            32 !== count(array_unique(str_split($alphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
+            str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
+            str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
+            str_contains($alphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
+            default => [$alphabet, $padding],
+        };
     }
 
     public static function new(string $alphabet, string $padding): self
@@ -49,11 +40,12 @@ final class Base32
             return '';
         }
 
+        $encoded = str_replace(["\r", "\n"], [''], $encoded);
         if (!$strict) {
-            $encoded = strtoupper($encoded);
+            $encoded = str_replace(strtoupper($this->padding), $this->padding, strtoupper($encoded));
         }
 
-        if (strtoupper($encoded) !== $encoded) {
+        if (str_replace(strtoupper($this->padding), $this->padding, strtoupper($encoded)) !== $encoded) {
             throw new RuntimeException('The encoded data contains non uppercased characters.');
         }
 
