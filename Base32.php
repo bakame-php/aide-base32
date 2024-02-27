@@ -9,29 +9,33 @@ use ValueError;
 
 final class Base32
 {
+    private readonly string $alphabet;
+
     private function __construct(
-        private readonly string $alphabet,
+        string $alphabet,
         private readonly string $padding,
     ) {
-        if (in_array($this->padding, ["\r", "\n"], true)) {
-            throw new ValueError('The padding character is invalid.');
-        }
-
         if (1 !== strlen($this->padding)) {
             throw new ValueError('The padding character must be one byte long.');
         }
 
+        if (in_array($this->padding, ["\r", "\n"], true)) {
+            throw new ValueError('The padding character is invalid.');
+        }
+
         if (32 !== count(array_unique(str_split($alphabet)))) {
-            throw new ValueError('The alphabet must be 32 bytes long containing unique characters.');
+            throw new ValueError('The alphabet must be 32 bytes long string containing unique characters.');
         }
 
         if (
-            str_contains($this->alphabet, "\r") ||
-            str_contains($this->alphabet, "\n") ||
-            str_contains($this->alphabet, $this->padding)
+            str_contains($alphabet, "\r") ||
+            str_contains($alphabet, "\n") ||
+            str_contains($alphabet, $this->padding)
         ) {
-            throw new ValueError('The alphabet contains invalid characters.');
+            throw new ValueError('The alphabet contains an invalid character.');
         }
+
+        $this->alphabet = strtoupper($alphabet);
     }
 
     public static function new(string $alphabet, string $padding): self
@@ -127,7 +131,7 @@ final class Base32
         $len = strlen($decoded);
         $decoded .= str_repeat(chr(0), 4);
         $chars = (array) unpack('C*', $decoded);
-        $alphabet = $this->alphabet.$this->padding;
+        $characters = $this->alphabet.$this->padding;
 
         while ($n < $len || 0 !== $bitLen) {
             if ($bitLen < 5) {
@@ -137,7 +141,7 @@ final class Base32
                 $val += $chars[$n];
             }
             $shift = $bitLen - 5;
-            $encoded .= ($n - (int)($bitLen > 8) > $len && 0 == $val) ? $this->padding : $alphabet[$val >> $shift];
+            $encoded .= ($n - (int)($bitLen > 8) > $len && 0 == $val) ? $this->padding : $characters[$val >> $shift];
             $val = $val & ((1 << $shift) - 1);
             $bitLen -= 5;
         }

@@ -70,7 +70,6 @@ final class Base32Test extends TestCase
         } catch (ValueError $exception) {
             self::assertSame($message, $exception->getMessage());
         }
-
     }
 
     /**
@@ -234,6 +233,13 @@ final class Base32Test extends TestCase
             'message' => 'The padding character is invalid.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\r",
+        ];
+
+        yield 'the padding character can not contain "\n"' => [
+            'sequence' => 'A',
+            'message' => 'The padding character is invalid.',
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => "\n",
         ];
     }
 }
