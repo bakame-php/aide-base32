@@ -20,14 +20,15 @@ final class Base32
             1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
             "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
             "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
-            32 !== strlen($normalizeAlphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
+            32 !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
+            str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
+            str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
             32 !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
-            str_contains($normalizeAlphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
             str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
             default => [$alphabet, $padding],
         };
     }
-
+""
     public static function new(string $alphabet, string $padding): self
     {
         return new self($alphabet, $padding);
