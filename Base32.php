@@ -28,7 +28,7 @@ final class Base32
             default => [$alphabet, $padding],
         };
     }
-""
+
     public static function new(string $alphabet, string $padding): self
     {
         return new self($alphabet, $padding);
