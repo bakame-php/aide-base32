@@ -14,16 +14,16 @@ final class Base32
 
     private function __construct(string $alphabet, string $padding)
     {
-        $alphabet = strtoupper($alphabet);
+        $normalizeAlphabet = strtoupper($alphabet);
 
         [$this->alphabet, $this->padding] = match (true) {
             1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
             "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
             "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
-            32 !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
-            32 !== count(array_unique(str_split($alphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
-            str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
-            str_contains($alphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
+            32 !== strlen($normalizeAlphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
+            32 !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
+            str_contains($normalizeAlphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
+            str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
             default => [$alphabet, $padding],
         };
     }
@@ -39,13 +39,11 @@ final class Base32
             return '';
         }
 
+        $alphabet = $this->alphabet;
         $encoded = str_replace(["\r", "\n"], [''], $encoded);
         if (!$strict) {
+            $alphabet = strtoupper($alphabet);
             $encoded = str_replace(strtoupper($this->padding), $this->padding, strtoupper($encoded));
-        }
-
-        if (str_replace(strtoupper($this->padding), $this->padding, strtoupper($encoded)) !== $encoded) {
-            throw new RuntimeException('The encoded data contains non uppercased characters.');
         }
 
         $remainder = strlen($encoded) % 8;
@@ -102,7 +100,7 @@ final class Base32
 
             $shift = $bitLen - 8;
             $decoded .= chr($val >> $shift);
-            $val = $val & ((1 << $shift) - 1);
+            $val &= ((1 << $shift) - 1);
             $bitLen -= 8;
         }
 
@@ -133,7 +131,7 @@ final class Base32
             }
             $shift = $bitLen - 5;
             $encoded .= ($n - (int)($bitLen > 8) > $len && 0 == $val) ? $this->padding : $characters[$val >> $shift];
-            $val = $val & ((1 << $shift) - 1);
+            $val &= ((1 << $shift) - 1);
             $bitLen -= 5;
         }
 

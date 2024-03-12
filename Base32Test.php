@@ -67,6 +67,15 @@ BASE;
         self::assertSame('Bangui', base32_decode($base32, PHP_BASE32_HEX, 'y', true));
     }
 
+    #[Test]
+    public function it_wiil_distinguish_alphabet_on_character_casing_on_strict_mode(): void
+    {
+        $alphabet = strtolower(PHP_BASE32_ASCII);
+        $expected = 'bangui';
+
+        self::assertSame($expected, base32_decode(encoded: base32_encode($expected, $alphabet)));
+        self::assertFalse(base32_decode(encoded: base32_encode($expected, $alphabet), strict: true));
+    }
 
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
