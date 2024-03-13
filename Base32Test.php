@@ -268,5 +268,19 @@ BASE;
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\n",
         ];
+
+        yield 'the alphabet can not contain "\r"' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet can not contain the carriage return character.',
+            'alphabet' => substr(PHP_BASE32_ASCII, 0, -1)."\r",
+            'padding' => '=',
+        ];
+
+        yield 'the alphabet can not contain "\n"' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet can not contain the newline escape sequence.',
+            'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\n",
+            'padding' => '=',
+        ];
     }
 }

@@ -23,8 +23,8 @@ final class Base32
             32 !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
             str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
             str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
-            32 !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
             str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
+            32 !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
             default => [$alphabet, $padding],
         };
     }
@@ -56,7 +56,7 @@ final class Base32
             $encoded .= str_repeat($this->padding, $remainder);
         }
 
-        $characters = $this->alphabet.$this->padding;
+        $characters = $alphabet.$this->padding;
         if (strspn($encoded, $characters) !== strlen($encoded)) {
             if ($strict) {
                 throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
@@ -70,32 +70,31 @@ final class Base32
         $inside = rtrim($encoded, $this->padding);
         if (str_contains($inside, $this->padding)) {
             if ($strict) {
-                throw new RuntimeException('The encoded data contains the padding characters.');
+                throw new RuntimeException('The encoded data contains the padding character.');
             }
             $encoded = str_replace($this->padding, '', $inside).substr($encoded, strlen($inside));
         }
 
         if ($strict && 1 !== preg_match('/^[^'.$this->padding.']+(('.$this->padding.'){3,4}|('.$this->padding.'){6}|'.$this->padding.')?$/', $encoded)) {
-            throw new RuntimeException('The encoded data contains the padding characters.');
+            throw new RuntimeException('The encoded data contains the padding character.');
         }
 
         $decoded = '';
-        $len = strlen($encoded);
-        $n = 0;
+        $offset = 0;
         $bitLen = 5;
-        $mapping = array_combine(str_split($characters), [...range(0, 31), 0]);
-        $val = $mapping[$encoded[0]];
+        $length = strlen($encoded);
+        $chars = array_combine(str_split($characters), [...range(0, 31), 0]);
+        $val = $chars[$encoded[0]];
 
-        while ($n < $len) {
+        while ($offset < $length) {
             if ($bitLen < 8) {
-                $val = $val << 5;
                 $bitLen += 5;
-                $n++;
-                $pentet = $encoded[$n] ?? $this->padding;
+                $offset++;
+                $pentet = $encoded[$offset] ?? $this->padding;
                 if ($this->padding === $pentet) {
-                    $n = $len;
+                    $offset = $length;
                 }
-                $val += $mapping[$pentet];
+                $val = ($val << 5) + $chars[$pentet];
                 continue;
             }
 
@@ -115,23 +114,22 @@ final class Base32
         }
 
         $encoded = '';
-        $n = 0;
+        $offset = 0;
         $bitLen = 0;
         $val = 0;
-        $len = strlen($decoded);
+        $length = strlen($decoded);
         $decoded .= str_repeat(chr(0), 4);
         $chars = (array) unpack('C*', $decoded);
         $characters = $this->alphabet.$this->padding;
 
-        while ($n < $len || 0 !== $bitLen) {
+        while ($offset < $length || 0 !== $bitLen) {
             if ($bitLen < 5) {
-                $val = $val << 8;
                 $bitLen += 8;
-                $n++;
-                $val += $chars[$n];
+                $offset++;
+                $val = ($val << 8) + $chars[$offset];
             }
             $shift = $bitLen - 5;
-            $encoded .= ($n - (int)($bitLen > 8) > $len && 0 == $val) ? $this->padding : $characters[$val >> $shift];
+            $encoded .= ($offset - (int)($bitLen > 8) > $length && 0 == $val) ? $this->padding : $characters[$val >> $shift];
             $val &= ((1 << $shift) - 1);
             $bitLen -= 5;
         }
