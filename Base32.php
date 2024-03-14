@@ -9,9 +9,16 @@ use ValueError;
 
 final class Base32
 {
+    private const ALPHABET_SIZE = 32;
+    /** @var non-empty-string */
     private readonly string $alphabet;
+    /** @var non-empty-string */
     private readonly string $padding;
 
+    /**
+     * @param non-empty-string $alphabet
+     * @param non-empty-string $padding
+     */
     private function __construct(string $alphabet, string $padding)
     {
         $normalizeAlphabet = strtoupper($alphabet);
@@ -20,15 +27,19 @@ final class Base32
             1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
             "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
             "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
-            32 !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
+            self::ALPHABET_SIZE !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
             str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
             str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
             str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
-            32 !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
+            self::ALPHABET_SIZE !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
             default => [$alphabet, $padding],
         };
     }
 
+    /**
+     * @param non-empty-string $alphabet
+     * @param non-empty-string $padding
+     */
     public static function new(string $alphabet, string $padding): self
     {
         return new self($alphabet, $padding);

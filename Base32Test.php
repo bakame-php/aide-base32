@@ -86,7 +86,7 @@ BASE;
         string $padding
     ): void {
         try {
-            self::assertFalse(base32_decode($sequence, $alphabet, $padding, true));
+            self::assertFalse(base32_decode($sequence, $alphabet, $padding, true)); /* @phpstan-ignore-line */
         } catch (ValueError $exception) {
             self::assertSame($message, $exception->getMessage());
         }
