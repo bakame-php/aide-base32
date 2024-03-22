@@ -22,16 +22,17 @@ final class Base32
     private function __construct(string $alphabet, string $padding)
     {
         $normalizeAlphabet = strtoupper($alphabet);
-
         [$this->alphabet, $this->padding] = match (true) {
             1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
             "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
             "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
+            ' ' === $padding => throw new ValueError('The padding character can not be the empty string sequence.'),
             self::ALPHABET_SIZE !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
             str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
             str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
+            str_contains($alphabet, " ") => throw new ValueError('The alphabet can not contain the space character.'),
             str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
-            self::ALPHABET_SIZE !== count(array_unique(str_split($normalizeAlphabet))) => throw new ValueError('The alphabet must contain unique characters.'),
+            self::ALPHABET_SIZE !== strlen(count_chars($normalizeAlphabet, 3)) => throw new ValueError('The alphabet must contain unique characters.'), /* @phpstan-ignore-line */
             default => [$alphabet, $padding],
         };
     }
@@ -52,60 +53,70 @@ final class Base32
         }
 
         $alphabet = $this->alphabet;
-        $encoded = str_replace(["\r", "\n"], [''], $encoded);
+        $padding = $this->padding;
+        $encoded = str_replace(["\r", "\n", ' '], [''], $encoded);
         if (!$strict) {
             $alphabet = strtoupper($alphabet);
-            $encoded = str_replace(strtoupper($this->padding), $this->padding, strtoupper($encoded));
+            $padding = strtoupper($padding);
+            $encoded = strtoupper($encoded);
         }
 
         $remainder = strlen($encoded) % 8;
         if (0 !== $remainder) {
-            if ($strict) {
+            $encoded .= !$strict ?
+                str_repeat($padding, $remainder) :
                 throw new RuntimeException('The encoded data length is invalid.');
-            }
-
-            $encoded .= str_repeat($this->padding, $remainder);
         }
 
-        $characters = $alphabet.$this->padding;
-        if (strspn($encoded, $characters) !== strlen($encoded)) {
-            if ($strict) {
-                throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
-            }
-            $encoded = preg_replace('/[^'.preg_quote($characters, '/').']/', '', $encoded);
-            if ('' === $encoded || null === $encoded) {
-                return '';
-            }
+        $inside = rtrim($encoded, $padding);
+        $end = substr($encoded, strlen($inside));
+        if ($strict && !in_array(strlen($end), [0, 1, 3, 4, 6], true)) {
+            throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
         }
 
-        $inside = rtrim($encoded, $this->padding);
-        if (str_contains($inside, $this->padding)) {
-            if ($strict) {
-                throw new RuntimeException('The encoded data contains the padding character.');
-            }
-            $encoded = str_replace($this->padding, '', $inside).substr($encoded, strlen($inside));
+        if (str_contains($inside, $padding)) {
+            $encoded = !$strict ?
+                str_replace($padding, '', $inside).$end :
+                throw new RuntimeException('The padding character is used inside the encoded data in an invalid place.');
         }
 
-        if ($strict && 1 !== preg_match('/^[^'.$this->padding.']+(('.$this->padding.'){3,4}|('.$this->padding.'){6}|'.$this->padding.')?$/', $encoded)) {
-            throw new RuntimeException('The encoded data contains the padding character.');
-        }
-
+        $characters = $alphabet.$padding;
         $decoded = '';
         $offset = 0;
         $bitLen = 5;
         $length = strlen($encoded);
         $chars = array_combine(str_split($characters), [...range(0, 31), 0]);
-        $val = $chars[$encoded[0]];
+        $val = $chars[$encoded[$offset]] ?? -1;
+        if ($strict && -1 === $val) {
+            throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
+        }
 
         while ($offset < $length) {
+            if (-1 === $val) {
+                if ($strict) {
+                    throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
+                }
+                $offset++;
+                if ($offset === $length) {
+                    break;
+                }
+                $val = $chars[$encoded[$offset]] ?? -1;
+                continue;
+            }
+
             if ($bitLen < 8) {
                 $bitLen += 5;
                 $offset++;
-                $pentet = $encoded[$offset] ?? $this->padding;
-                if ($this->padding === $pentet) {
+                $pentet = $encoded[$offset] ?? $padding;
+                if ($padding === $pentet) {
                     $offset = $length;
                 }
-                $val = ($val << 5) + $chars[$pentet];
+
+                if (!array_key_exists($pentet, $chars) && $strict) {
+                    throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
+                }
+
+                $val = ($val << 5) + ($chars[$pentet] ?? 0);
                 continue;
             }
 
