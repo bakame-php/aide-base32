@@ -10,6 +10,7 @@ use ValueError;
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
+    private const INVALID_CHARACTERS = "\r\n ";
     /** @var non-empty-string */
     private readonly string $alphabet;
     /** @var non-empty-string */
@@ -21,20 +22,32 @@ final class Base32
      */
     private function __construct(string $alphabet, string $padding)
     {
-        $normalizeAlphabet = strtoupper($alphabet);
-        [$this->alphabet, $this->padding] = match (true) {
-            1 !== strlen($padding) => throw new ValueError('The padding character must a single character.'),
-            "\r" === $padding => throw new ValueError('The padding character can not be the carriage return character.'),
-            "\n" === $padding => throw new ValueError('The padding character can not be the newline escape sequence.'),
-            ' ' === $padding => throw new ValueError('The padding character can not be the space character.'),
-            self::ALPHABET_SIZE !== strlen($alphabet) => throw new ValueError('The alphabet must be a 32 bytes long string.'),
-            self::ALPHABET_SIZE !== strlen(count_chars($normalizeAlphabet, 3)) => throw new ValueError('The alphabet must contain omly unique characters.'), /* @phpstan-ignore-line */
-            str_contains($alphabet, "\r") => throw new ValueError('The alphabet can not contain the carriage return character.'),
-            str_contains($alphabet, "\n") => throw new ValueError('The alphabet can not contain the newline escape sequence.'),
-            str_contains($alphabet, " ") => throw new ValueError('The alphabet can not contain the space character.'),
-            str_contains($normalizeAlphabet, strtoupper($padding)) => throw new ValueError('The alphabet can not contain the padding character.'),
-            default => [$alphabet, $padding],
-        };
+        if (1 !== strlen($padding) || false !== strpos(self::INVALID_CHARACTERS, $padding)) {
+            throw new ValueError('The padding character must be a valid single character.');
+        }
+
+        if (self::ALPHABET_SIZE !== strlen($alphabet)) {
+            throw new ValueError('The alphabet must be a 32 bytes long string.');
+        }
+
+        $upperAlphabet = strtoupper($alphabet);
+        $upperPadding = strtoupper($padding);
+        if (32 !== strcspn($upperAlphabet, self::INVALID_CHARACTERS.$upperPadding)) {
+            throw new ValueError('The alphabet can not contain an invalid character.');
+        }
+
+        $uniqueChars = [];
+        for ($index = 0; $index < 32; $index++) {
+            $char = $upperAlphabet[$index];
+            if (array_key_exists($char, $uniqueChars)) {
+                throw new ValueError('The alphabet must only contain unique characters.');
+            }
+
+            $uniqueChars[$char] = 1;
+        }
+
+        $this->alphabet = $alphabet;
+        $this->padding = $padding;
     }
 
     /**
@@ -54,7 +67,7 @@ final class Base32
 
         $alphabet = $this->alphabet;
         $padding = $this->padding;
-        $encoded = str_replace(["\r", "\n", ' '], [''], $encoded);
+        $encoded = str_replace(str_split(self::INVALID_CHARACTERS), [''], $encoded);
         if (!$strict) {
             $alphabet = strtoupper($alphabet);
             $padding = strtoupper($padding);
@@ -63,34 +76,42 @@ final class Base32
 
         $remainder = strlen($encoded) % 8;
         if (0 !== $remainder) {
-            $encoded .= !$strict ?
-                str_repeat($padding, $remainder) :
+            if ($strict) {
                 throw new RuntimeException('The encoded data length is invalid.');
+            }
+
+            $encoded .= str_repeat($padding, $remainder);
         }
 
         $inside = rtrim($encoded, $padding);
         $end = substr($encoded, strlen($inside));
-        if ($strict && !in_array(strlen($end), [0, 1, 3, 4, 6], true)) {
+        $endLegnth = strlen($end);
+        if ($strict && 0 !== $endLegnth && 1 !== $endLegnth && 3 !== $endLegnth && 4 !== $endLegnth && 6 !== $endLegnth) {
             throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
         }
 
-        if (str_contains($inside, $padding)) {
-            $encoded = !$strict ?
-                str_replace($padding, '', $inside).$end :
+        if (false !== strpos($inside, $padding)) {
+            if ($strict) {
                 throw new RuntimeException('The padding character is used inside the encoded data in an invalid place.');
+            }
+
+            $encoded = str_replace($padding, '', $inside).$end;
         }
 
-        $characters = $alphabet.$padding;
-        $decoded = '';
-        $offset = 0;
-        $bitLen = 5;
-        $length = strlen($encoded);
-        $chars = array_combine(str_split($characters), [...range(0, 31), 0]);
-        $val = $chars[$encoded[$offset]] ?? -1;
+        $chars = [];
+        foreach (str_split($alphabet) as $offset => $char) {
+            $chars[$char] = $offset;
+        }
+        $chars[$padding] = 0;
+        $val = $chars[$encoded[0]] ?? -1;
         if ($strict && -1 === $val) {
             throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
         }
 
+        $offset = 0;
+        $bitLen = 5;
+        $length = strlen($encoded);
+        $decoded = '';
         while ($offset < $length) {
             if (-1 === $val) {
                 if ($strict) {
@@ -112,7 +133,7 @@ final class Base32
                     $offset = $length;
                 }
 
-                if (!array_key_exists($pentet, $chars) && $strict) {
+                if ($strict && !array_key_exists($pentet, $chars)) {
                     throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
                 }
 
@@ -135,15 +156,13 @@ final class Base32
             return '';
         }
 
-        $encoded = '';
         $offset = 0;
         $bitLen = 0;
         $val = 0;
         $length = strlen($decoded);
         $decoded .= str_repeat(chr(0), 4);
         $chars = (array) unpack('C*', $decoded);
-        $characters = $this->alphabet.$this->padding;
-
+        $encoded = '';
         while ($offset < $length || 0 !== $bitLen) {
             if ($bitLen < 5) {
                 $bitLen += 8;
@@ -151,7 +170,7 @@ final class Base32
                 $val = ($val << 8) + $chars[$offset];
             }
             $shift = $bitLen - 5;
-            $encoded .= ($offset - (int)($bitLen > 8) > $length && 0 == $val) ? $this->padding : $characters[$val >> $shift];
+            $encoded .= ($offset - ($bitLen > 8 ? 1 : 0) > $length && 0 === $val) ? $this->padding : $this->alphabet[$val >> $shift];
             $val &= ((1 << $shift) - 1);
             $bitLen -= 5;
         }
