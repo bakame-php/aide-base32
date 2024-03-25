@@ -33,7 +33,7 @@ final class Base32
         $upperAlphabet = strtoupper($alphabet);
         $upperPadding = strtoupper($padding);
         if (32 !== strcspn($upperAlphabet, self::RESERVED_CHARACTERS.$upperPadding)) {
-            throw new ValueError('The alphabet can not contain a reerved character.');
+            throw new ValueError('The alphabet can not contain a reserved character.');
         }
 
         $uniqueChars = [];
