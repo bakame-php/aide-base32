@@ -10,7 +10,7 @@ use ValueError;
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
-    private const INVALID_CHARACTERS = "\r\n ";
+    private const RESERVED_CHARACTERS = "\r\n ";
     /** @var non-empty-string */
     private readonly string $alphabet;
     /** @var non-empty-string */
@@ -22,22 +22,22 @@ final class Base32
      */
     private function __construct(string $alphabet, string $padding)
     {
-        if (1 !== strlen($padding) || false !== strpos(self::INVALID_CHARACTERS, $padding)) {
-            throw new ValueError('The padding character must be a valid single character.');
+        if (1 !== strlen($padding) || false !== strpos(self::RESERVED_CHARACTERS, $padding)) {
+            throw new ValueError('The padding character must be a non reserved single character.');
         }
 
         if (self::ALPHABET_SIZE !== strlen($alphabet)) {
-            throw new ValueError('The alphabet must be a 32 bytes long string.');
+            throw new ValueError('The alphabet must be a '.self::ALPHABET_SIZE.' bytes long string.');
         }
 
         $upperAlphabet = strtoupper($alphabet);
         $upperPadding = strtoupper($padding);
-        if (32 !== strcspn($upperAlphabet, self::INVALID_CHARACTERS.$upperPadding)) {
-            throw new ValueError('The alphabet can not contain an invalid character.');
+        if (32 !== strcspn($upperAlphabet, self::RESERVED_CHARACTERS.$upperPadding)) {
+            throw new ValueError('The alphabet can not contain a reerved character.');
         }
 
         $uniqueChars = [];
-        for ($index = 0; $index < 32; $index++) {
+        for ($index = 0; $index < self::ALPHABET_SIZE; $index++) {
             $char = $upperAlphabet[$index];
             if (array_key_exists($char, $uniqueChars)) {
                 throw new ValueError('The alphabet must only contain unique characters.');
@@ -67,7 +67,7 @@ final class Base32
 
         $alphabet = $this->alphabet;
         $padding = $this->padding;
-        $encoded = str_replace(str_split(self::INVALID_CHARACTERS), [''], $encoded);
+        $encoded = str_replace(str_split(self::RESERVED_CHARACTERS), [''], $encoded);
         if (!$strict) {
             $alphabet = strtoupper($alphabet);
             $padding = strtoupper($padding);
@@ -92,7 +92,7 @@ final class Base32
 
         if (false !== strpos($inside, $padding)) {
             if ($strict) {
-                throw new RuntimeException('The padding character is used inside the encoded data in an invalid place.');
+                throw new RuntimeException('The padding character is used in the encoded data in an invalid place.');
             }
 
             $encoded = str_replace($padding, '', $inside).$end;
