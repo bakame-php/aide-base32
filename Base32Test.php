@@ -236,14 +236,14 @@ BASE;
 
         yield 'the padding character is contained within the alphabet' => [
             'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reerved character.',
+            'message' => 'The alphabet can not contain a reserved character.',
             'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
             'padding' => '*',
         ];
 
         yield 'the padding character is contained within the alphabet is case insensitive' => [
             'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reerved character.',
+            'message' => 'The alphabet can not contain a reserved character.',
             'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
             'padding' => 'a',
         ];
@@ -271,14 +271,14 @@ BASE;
 
         yield 'the alphabet can not contain "\r"' => [
             'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reerved character.',
+            'message' => 'The alphabet can not contain a reserved character.',
             'alphabet' => substr(PHP_BASE32_ASCII, 0, -1)."\r",
             'padding' => '=',
         ];
 
         yield 'the alphabet can not contain "\n"' => [
             'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reerved character.',
+            'message' => 'The alphabet can not contain a reserved character.',
             'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\n",
             'padding' => '=',
         ];
