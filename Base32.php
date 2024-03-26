@@ -23,7 +23,7 @@ final class Base32
     private function __construct(string $alphabet, string $padding)
     {
         if (1 !== strlen($padding) || false !== strpos(self::RESERVED_CHARACTERS, $padding)) {
-            throw new ValueError('The padding character must be a non reserved single character.');
+            throw new ValueError('The padding character must be a non reserved single byte character.');
         }
 
         if (self::ALPHABET_SIZE !== strlen($alphabet)) {
@@ -85,8 +85,8 @@ final class Base32
 
         $inside = rtrim($encoded, $padding);
         $end = substr($encoded, strlen($inside));
-        $endLegnth = strlen($end);
-        if ($strict && 0 !== $endLegnth && 1 !== $endLegnth && 3 !== $endLegnth && 4 !== $endLegnth && 6 !== $endLegnth) {
+        $endLength = strlen($end);
+        if ($strict && 0 !== $endLength && 1 !== $endLength && 3 !== $endLength && 4 !== $endLength && 6 !== $endLength) {
             throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
         }
 
@@ -103,26 +103,23 @@ final class Base32
             $chars[$char] = $offset;
         }
         $chars[$padding] = 0;
-        $val = $chars[$encoded[0]] ?? -1;
-        if ($strict && -1 === $val) {
-            throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
-        }
-
         $offset = 0;
         $bitLen = 5;
         $length = strlen($encoded);
         $decoded = '';
-        while ($offset < $length) {
+
+        do {
+            $val ??= $chars[$encoded[$offset]] ?? -1;
             if (-1 === $val) {
                 if ($strict) {
                     throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
                 }
                 $offset++;
-                if ($offset === $length) {
-                    break;
+                if ($offset < $length) {
+                    $val = null;
+                    continue;
                 }
-                $val = $chars[$encoded[$offset]] ?? -1;
-                continue;
+                break;
             }
 
             if ($bitLen < 8) {
@@ -145,7 +142,7 @@ final class Base32
             $decoded .= chr($val >> $shift);
             $val &= ((1 << $shift) - 1);
             $bitLen -= 8;
-        }
+        } while ($offset < $length);
 
         return $decoded;
     }
