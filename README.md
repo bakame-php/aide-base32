@@ -48,7 +48,7 @@ If the strict parameter is set to `true` then the base32_decode() function will 
 - if encoded sequence length is invalid
 - if the input contains character from outside the base64 alphabet. 
 - if padding is invalid
-- if encoded characters are not all uppercased
+- if encoded characters do not follow the alphabet lettercase.
 
 otherwise listed constraints are silently ignored or discarded.
 

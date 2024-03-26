@@ -7,6 +7,18 @@ namespace Bakame\Aide\Base32;
 use RuntimeException;
 use ValueError;
 
+use function array_key_exists;
+use function chr;
+use function rtrim;
+use function str_replace;
+use function str_split;
+use function strcspn;
+use function strlen;
+use function strpos;
+use function strtoupper;
+use function substr;
+use function unpack;
+
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
@@ -32,7 +44,7 @@ final class Base32
 
         $upperAlphabet = strtoupper($alphabet);
         $upperPadding = strtoupper($padding);
-        if (32 !== strcspn($upperAlphabet, self::RESERVED_CHARACTERS.$upperPadding)) {
+        if (self::ALPHABET_SIZE !== strcspn($upperAlphabet, self::RESERVED_CHARACTERS.$upperPadding)) {
             throw new ValueError('The alphabet can not contain a reserved character.');
         }
 
@@ -102,20 +114,13 @@ final class Base32
             $encoded = strtoupper($encoded);
         }
 
-        $remainder = strlen($encoded) % 8;
-        if (0 !== $remainder) {
-            if ($strict) {
-                throw new RuntimeException('The encoded data length is invalid.');
-            }
-
-            $encoded .= str_repeat($padding, $remainder);
-        }
-
         $inside = rtrim($encoded, $padding);
         $end = substr($encoded, strlen($inside));
-        $endLength = strlen($end);
-        if ($strict && 0 !== $endLength && 1 !== $endLength && 3 !== $endLength && 4 !== $endLength && 6 !== $endLength) {
-            throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
+        if ($strict) {
+            $endLength = strlen($end);
+            if (0 !== $endLength && 1 !== $endLength && 3 !== $endLength && 4 !== $endLength && 6 !== $endLength) {
+                throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
+            }
         }
 
         if (false !== strpos($inside, $padding)) {
@@ -126,21 +131,40 @@ final class Base32
             $encoded = str_replace($padding, '', $inside).$end;
         }
 
+        $remainder = strlen($encoded) % 8;
+        if (0 !== $remainder) {
+            if ($strict) {
+                throw new RuntimeException('The encoded data length is invalid.');
+            }
+
+            $remainderStr = '';
+            for ($index = 0; $index < $remainder; $index++) {
+                $remainderStr .= $padding;
+            }
+
+            $encoded .= $remainderStr;
+        }
+
         $chars = [];
-        foreach (str_split($alphabet) as $offset => $char) {
-            $chars[$char] = $offset;
+        for ($index = 0; $index < self::ALPHABET_SIZE; $index++) {
+            $chars[$alphabet[$index]] = $index;
         }
         $chars[$padding] = 0;
+
         $offset = 0;
         $bitLen = 5;
         $length = strlen($encoded);
         $decoded = '';
 
         do {
-            $val ??= $chars[$encoded[$offset]] ?? -1;
+            if (!isset($val)) {
+                $index = $encoded[$offset];
+                $val = array_key_exists($index, $chars) ? $chars[$index] : -1;
+            }
+
             if (-1 === $val) {
                 if ($strict) {
-                    throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
+                    throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
                 }
                 $offset++;
                 if ($offset < $length) {
@@ -159,7 +183,7 @@ final class Base32
                 }
 
                 if ($strict && !array_key_exists($pentet, $chars)) {
-                    throw new RuntimeException('The encoded data contains characters unknown to the base32 alphabet.');
+                    throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
                 }
 
                 $val = ($val << 5) + ($chars[$pentet] ?? 0);
