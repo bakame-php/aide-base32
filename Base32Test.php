@@ -269,6 +269,13 @@ BASE;
             'padding' => "\n",
         ];
 
+        yield 'the padding character can not contain "\t"' => [
+            'sequence' => 'A',
+            'message' => 'The padding character must be a non reserved single byte character.',
+            'alphabet' => PHP_BASE32_ASCII,
+            'padding' => "\t",
+        ];
+
         yield 'the alphabet can not contain "\r"' => [
             'sequence' => 'A',
             'message' => 'The alphabet can not contain a reserved character.',
@@ -280,6 +287,13 @@ BASE;
             'sequence' => 'A',
             'message' => 'The alphabet can not contain a reserved character.',
             'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\n",
+            'padding' => '=',
+        ];
+
+        yield 'the alphabet can not contain "\t"' => [
+            'sequence' => 'A',
+            'message' => 'The alphabet can not contain a reserved character.',
+            'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\t",
             'padding' => '=',
         ];
     }

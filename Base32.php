@@ -10,7 +10,7 @@ use ValueError;
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
-    private const RESERVED_CHARACTERS = "\r\n ";
+    private const RESERVED_CHARACTERS = "\r\t\n ";
     /** @var non-empty-string */
     private readonly string $alphabet;
     /** @var non-empty-string */
@@ -57,6 +57,34 @@ final class Base32
     public static function new(string $alphabet, string $padding): self
     {
         return new self($alphabet, $padding);
+    }
+
+    public function encode(string $decoded): string
+    {
+        if ('' === $decoded) {
+            return '';
+        }
+
+        $offset = 0;
+        $bitLen = 0;
+        $val = 0;
+        $length = strlen($decoded);
+        $decoded .= chr(0).chr(0).chr(0).chr(0);
+        $chars = (array) unpack('C*', $decoded);
+        $encoded = '';
+        while ($offset < $length || 0 !== $bitLen) {
+            if ($bitLen < 5) {
+                $bitLen += 8;
+                $offset++;
+                $val = ($val << 8) + $chars[$offset];
+            }
+            $shift = $bitLen - 5;
+            $encoded .= ($offset - ($bitLen > 8 ? 1 : 0) > $length && 0 === $val) ? $this->padding : $this->alphabet[$val >> $shift];
+            $val &= ((1 << $shift) - 1);
+            $bitLen -= 5;
+        }
+
+        return $encoded;
     }
 
     public function decode(string $encoded, bool $strict = false): string
@@ -145,33 +173,5 @@ final class Base32
         } while ($offset < $length);
 
         return $decoded;
-    }
-
-    public function encode(string $decoded): string
-    {
-        if ('' === $decoded) {
-            return '';
-        }
-
-        $offset = 0;
-        $bitLen = 0;
-        $val = 0;
-        $length = strlen($decoded);
-        $decoded .= str_repeat(chr(0), 4);
-        $chars = (array) unpack('C*', $decoded);
-        $encoded = '';
-        while ($offset < $length || 0 !== $bitLen) {
-            if ($bitLen < 5) {
-                $bitLen += 8;
-                $offset++;
-                $val = ($val << 8) + $chars[$offset];
-            }
-            $shift = $bitLen - 5;
-            $encoded .= ($offset - ($bitLen > 8 ? 1 : 0) > $length && 0 === $val) ? $this->padding : $this->alphabet[$val >> $shift];
-            $val &= ((1 << $shift) - 1);
-            $bitLen -= 5;
-        }
-
-        return $encoded;
     }
 }
