@@ -35,7 +35,7 @@ final class Base32
     private function __construct(string $alphabet, string $padding)
     {
         if (1 !== strlen($padding) || false !== strpos(self::RESERVED_CHARACTERS, $padding)) {
-            throw new ValueError('The padding character must be a non reserved single byte character.');
+            throw new ValueError('The padding character must be a non-reserved single byte character.');
         }
 
         if (self::ALPHABET_SIZE !== strlen($alphabet)) {
@@ -155,7 +155,6 @@ final class Base32
         $bitLen = 5;
         $length = strlen($encoded);
         $decoded = '';
-
         do {
             if (!isset($val)) {
                 $index = $encoded[$offset];

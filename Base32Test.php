@@ -250,28 +250,28 @@ BASE;
 
         yield 'the padding character is different than one byte' => [
             'sequence' => 'A',
-            'message' => 'The padding character must be a non reserved single byte character.',
+            'message' => 'The padding character must be a non-reserved single byte character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => 'yo',
         ];
 
         yield 'the padding character can not contain "\r"' => [
             'sequence' => 'A',
-            'message' => 'The padding character must be a non reserved single byte character.',
+            'message' => 'The padding character must be a non-reserved single byte character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\r",
         ];
 
         yield 'the padding character can not contain "\n"' => [
             'sequence' => 'A',
-            'message' => 'The padding character must be a non reserved single byte character.',
+            'message' => 'The padding character must be a non-reserved single byte character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\n",
         ];
 
         yield 'the padding character can not contain "\t"' => [
             'sequence' => 'A',
-            'message' => 'The padding character must be a non reserved single byte character.',
+            'message' => 'The padding character must be a non-reserved single byte character.',
             'alphabet' => PHP_BASE32_ASCII,
             'padding' => "\t",
         ];
