@@ -124,6 +124,7 @@ BASE;
         return [
             ...self::base32encodeAsciiDataProvider(),
             'All Invalid Characters' => ['', '8908908908908908'],
+            'empty Characters' => ['', '         '],
         ];
     }
 
@@ -158,6 +159,7 @@ BASE;
         return [
             ...self::base32encodeHexDataProvider(),
             'All Invalid Characters' => ['', 'WXYXWXYZWXYZWXYZ'],
+            'empty Characters' => ['', '         '],
         ];
     }
 

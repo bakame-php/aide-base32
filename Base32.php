@@ -194,10 +194,6 @@ final class Base32
             $encoded = str_replace($padding, '', $inside).$end;
         }
 
-        if ('' === $encoded) {
-            return [$encoded, $alphabet, $padding];
-        }
-
         $remainder = strlen($encoded) % 8;
         if (0 !== $remainder) {
             if ($strict) {
