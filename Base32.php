@@ -101,48 +101,9 @@ final class Base32
 
     public function decode(string $encoded, bool $strict = false): string
     {
+        [$encoded, $alphabet, $padding] = $this->prepareDecoding($encoded, $strict);
         if ('' === $encoded) {
             return '';
-        }
-
-        $alphabet = $this->alphabet;
-        $padding = $this->padding;
-        $encoded = str_replace(str_split(self::RESERVED_CHARACTERS), [''], $encoded);
-        if (!$strict) {
-            $alphabet = strtoupper($alphabet);
-            $padding = strtoupper($padding);
-            $encoded = strtoupper($encoded);
-        }
-
-        $inside = rtrim($encoded, $padding);
-        $end = substr($encoded, strlen($inside));
-        if ($strict) {
-            $endLength = strlen($end);
-            if (0 !== $endLength && 1 !== $endLength && 3 !== $endLength && 4 !== $endLength && 6 !== $endLength) {
-                throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
-            }
-        }
-
-        if (false !== strpos($inside, $padding)) {
-            if ($strict) {
-                throw new RuntimeException('The padding character is used in the encoded data in an invalid place.');
-            }
-
-            $encoded = str_replace($padding, '', $inside).$end;
-        }
-
-        $remainder = strlen($encoded) % 8;
-        if (0 !== $remainder) {
-            if ($strict) {
-                throw new RuntimeException('The encoded data length is invalid.');
-            }
-
-            $remainderStr = '';
-            for ($index = 0; $index < $remainder; $index++) {
-                $remainderStr .= $padding;
-            }
-
-            $encoded .= $remainderStr;
         }
 
         $chars = [];
@@ -196,5 +157,61 @@ final class Base32
         } while ($offset < $length);
 
         return $decoded;
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function prepareDecoding(string $encoded, bool $strict): array
+    {
+        if ('' === $encoded) {
+            return ['', $this->alphabet, $this->padding];
+        }
+
+        $alphabet = $this->alphabet;
+        $padding = $this->padding;
+        $encoded = str_replace(str_split(self::RESERVED_CHARACTERS), [''], $encoded);
+        if (!$strict) {
+            $alphabet = strtoupper($alphabet);
+            $padding = strtoupper($padding);
+            $encoded = strtoupper($encoded);
+        }
+
+        $inside = rtrim($encoded, $padding);
+        $end = substr($encoded, strlen($inside));
+        if ($strict) {
+            $endLength = strlen($end);
+            if (0 !== $endLength && 1 !== $endLength && 3 !== $endLength && 4 !== $endLength && 6 !== $endLength) {
+                throw new RuntimeException('The encoded data ends with an invalid padding sequence length.');
+            }
+        }
+
+        if (false !== strpos($inside, $padding)) {
+            if ($strict) {
+                throw new RuntimeException('The padding character is used in the encoded data in an invalid place.');
+            }
+
+            $encoded = str_replace($padding, '', $inside).$end;
+        }
+
+        if ('' === $encoded) {
+            return [$encoded, $alphabet, $padding];
+        }
+
+        $remainder = strlen($encoded) % 8;
+        if (0 !== $remainder) {
+            if ($strict) {
+                throw new RuntimeException('The encoded data length is invalid.');
+            }
+
+            $remainderStr = '';
+            for ($index = 0; $index < $remainder; $index++) {
+                $remainderStr .= $padding;
+            }
+
+            $encoded .= $remainderStr;
+        }
+
+        return [$encoded, $alphabet, $padding];
     }
 }
