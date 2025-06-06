@@ -7,7 +7,6 @@ namespace Bakame\Aide\Base32;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-
 use ValueError;
 
 use function base64_decode;
