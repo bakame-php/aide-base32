@@ -7,7 +7,6 @@ namespace Bakame\Aide\Base32;
 use RuntimeException;
 use ValueError;
 
-use function array_key_exists;
 use function chr;
 use function rtrim;
 use function str_replace;
@@ -32,7 +31,7 @@ final class Base32
      * @param non-empty-string $alphabet
      * @param non-empty-string $padding
      */
-    private function __construct(string $alphabet, string $padding)
+    public function __construct(string $alphabet, string $padding)
     {
         if (1 !== strlen($padding) || false !== strpos(self::RESERVED_CHARACTERS, $padding)) {
             throw new ValueError('The padding character must be a non-reserved single byte character.');
@@ -48,27 +47,18 @@ final class Base32
             throw new ValueError('The alphabet can not contain a reserved character.');
         }
 
-        $uniqueChars = [];
+        $uniqueChars = '';
         for ($index = 0; $index < self::ALPHABET_SIZE; $index++) {
             $char = $upperAlphabet[$index];
-            if (array_key_exists($char, $uniqueChars)) {
+            if (false !== strpos($uniqueChars, $char)) {
                 throw new ValueError('The alphabet must only contain unique characters.');
             }
 
-            $uniqueChars[$char] = 1;
+            $uniqueChars .= $char;
         }
 
         $this->alphabet = $alphabet;
         $this->padding = $padding;
-    }
-
-    /**
-     * @param non-empty-string $alphabet
-     * @param non-empty-string $padding
-     */
-    public static function new(string $alphabet, string $padding): self
-    {
-        return new self($alphabet, $padding);
     }
 
     public function encode(string $decoded): string
@@ -119,7 +109,7 @@ final class Base32
         do {
             if (!isset($val)) {
                 $index = $encoded[$offset];
-                $val = array_key_exists($index, $chars) ? $chars[$index] : -1;
+                $val = $chars[$index] ?? -1;
             }
 
             if (-1 === $val) {
@@ -142,7 +132,7 @@ final class Base32
                     $offset = $length;
                 }
 
-                if ($strict && !array_key_exists($pentet, $chars)) {
+                if ($strict && !isset($chars[$pentet])) {
                     throw new RuntimeException('The encoded data contains characters unknown to the alphabet.');
                 }
 

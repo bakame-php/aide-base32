@@ -74,7 +74,7 @@ BASE;
         $expected = 'bangui';
 
         self::assertSame($expected, base32_decode(encoded: base32_encode($expected, $alphabet)));
-        self::assertFalse(base32_decode(encoded: base32_encode($expected, $alphabet), strict: true));
+        self::assertNull(base32_decode(encoded: base32_encode($expected, $alphabet), strict: true));
     }
 
     #[DataProvider('invalidDecodingSequence')]
@@ -86,7 +86,7 @@ BASE;
         string $padding
     ): void {
         try {
-            self::assertFalse(base32_decode($sequence, $alphabet, $padding, true)); /* @phpstan-ignore-line */
+            self::assertNull(base32_decode($sequence, $alphabet, $padding, true)); /* @phpstan-ignore-line */
         } catch (ValueError $exception) {
             self::assertSame($message, $exception->getMessage());
         }
