@@ -7,31 +7,40 @@ namespace Bakame\Aide\Base32;
 use RuntimeException;
 use ValueError;
 
+use function chr;
+use function rtrim;
+use function str_contains;
+use function str_replace;
+use function str_split;
+use function strcspn;
+use function strlen;
+use function strtoupper;
+use function substr;
+use function unpack;
+
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
     private const RESERVED_CHARACTERS = "\r\t\n ";
-    /** @var non-empty-string */
-    private readonly string $alphabet;
-    /** @var non-empty-string */
-    private readonly string $padding;
 
     /**
      * @param non-empty-string $alphabet
      * @param non-empty-string $padding
      */
-    public function __construct(string $alphabet, string $padding)
-    {
-        if (1 !== strlen($padding) || false !== strpos(self::RESERVED_CHARACTERS, $padding)) {
+    public function __construct(
+        private readonly string $alphabet,
+        private readonly string $padding
+    ) {
+        if (1 !== strlen($this->padding) || str_contains(self::RESERVED_CHARACTERS, $this->padding)) {
             throw new ValueError('The padding character must be a non-reserved single byte character.');
         }
 
-        if (self::ALPHABET_SIZE !== strlen($alphabet)) {
+        if (self::ALPHABET_SIZE !== strlen($this->alphabet)) {
             throw new ValueError('The alphabet must be a '.self::ALPHABET_SIZE.' bytes long string.');
         }
 
-        $upperAlphabet = strtoupper($alphabet);
-        $upperPadding = strtoupper($padding);
+        $upperAlphabet = strtoupper($this->alphabet);
+        $upperPadding = strtoupper($this->padding);
         if (self::ALPHABET_SIZE !== strcspn($upperAlphabet, self::RESERVED_CHARACTERS.$upperPadding)) {
             throw new ValueError('The alphabet can not contain a reserved character.');
         }
@@ -39,15 +48,12 @@ final class Base32
         $uniqueChars = '';
         for ($index = 0; $index < self::ALPHABET_SIZE; $index++) {
             $char = $upperAlphabet[$index];
-            if (false !== strpos($uniqueChars, $char)) {
+            if (str_contains($uniqueChars, $char)) {
                 throw new ValueError('The alphabet must only contain unique characters.');
             }
 
             $uniqueChars .= $char;
         }
-
-        $this->alphabet = $alphabet;
-        $this->padding = $padding;
     }
 
     public function encode(string $decoded): string
@@ -165,7 +171,7 @@ final class Base32
             }
         }
 
-        if (false !== strpos($inside, $padding)) {
+        if (str_contains($inside, $padding)) {
             if ($strict) {
                 throw new RuntimeException('The padding character is used in the encoded data in an invalid place.');
             }

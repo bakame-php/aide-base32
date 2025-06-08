@@ -1,6 +1,6 @@
 {
     "name": "bakame/aide-base32",
-    "description": "base32 encoding and decoding using functions or class in PHP",
+    "description": "base32 encoding and decoding using functions in PHP",
     "type": "library",
     "keywords": ["base32", "encoding", "decoding", "RFC4648"],
     "license": "MIT",
@@ -13,9 +13,9 @@
         }
     ],
     "support": {
-        "docs": "https://github.com/bakame-php/aide",
-        "issues": "https://github.com/bakame-php/aide",
-        "source": "https://github.com/bakame-php/aide"
+        "docs": "https://github.com/bakame-php/aide-base32",
+        "issues": "https://github.com/bakame-php/aide-base32",
+        "source": "https://github.com/bakame-php/aide-base32"
     },
     "funding": [
         {
