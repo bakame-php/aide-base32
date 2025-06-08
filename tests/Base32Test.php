@@ -2,17 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Bakame\Aide\Base32;
-
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ValueError;
-
-use function base64_decode;
-
-use const PHP_BASE32_ASCII;
-use const PHP_BASE32_HEX;
 
 /**
  * @see https://opensource.apple.com/source/tcl/tcl-87/tcl_ext/tcllib/tcllib/modules/base32/base32hex.testsuite.auto.html
@@ -85,7 +77,8 @@ BASE;
         string $padding
     ): void {
         try {
-            self::assertNull(base32_decode($sequence, $alphabet, $padding, true)); /* @phpstan-ignore-line */
+            self::assertNull(base32_decode($sequence, $alphabet, $padding, true));
+            /* @phpstan-ignore-line */
         } catch (ValueError $exception) {
             self::assertSame($message, $exception->getMessage());
         }
@@ -280,21 +273,21 @@ BASE;
         yield 'the alphabet can not contain "\r"' => [
             'sequence' => 'A',
             'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_ASCII, 0, -1)."\r",
+            'alphabet' => substr(PHP_BASE32_ASCII, 0, -1) . "\r",
             'padding' => '=',
         ];
 
         yield 'the alphabet can not contain "\n"' => [
             'sequence' => 'A',
             'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\n",
+            'alphabet' => substr(PHP_BASE32_HEX, 0, -1) . "\n",
             'padding' => '=',
         ];
 
         yield 'the alphabet can not contain "\t"' => [
             'sequence' => 'A',
             'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_HEX, 0, -1)."\t",
+            'alphabet' => substr(PHP_BASE32_HEX, 0, -1) . "\t",
             'padding' => '=',
         ];
     }

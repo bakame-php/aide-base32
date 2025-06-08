@@ -7,17 +7,6 @@ namespace Bakame\Aide\Base32;
 use RuntimeException;
 use ValueError;
 
-use function chr;
-use function rtrim;
-use function str_replace;
-use function str_split;
-use function strcspn;
-use function strlen;
-use function strpos;
-use function strtoupper;
-use function substr;
-use function unpack;
-
 final class Base32
 {
     private const ALPHABET_SIZE = 32;
