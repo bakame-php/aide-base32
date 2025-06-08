@@ -2,10 +2,6 @@
 
 functions or class to allow encoding or decoding strings using [RFC4648](https://datatracker.ietf.org/doc/html/rfc4648) base32 algorithm.
 
-> [!CAUTION]  
-> Sub-split of Aide for Base32.  
-> ⚠️ this is a sub-split, for pull requests and issues, visit: https://github.com/bakame-php/aide
-
 ## Installation
 
 ### Composer
@@ -37,7 +33,7 @@ base32_decode(string $encoded, string $alphabet = PHP_BASE32_ASCII, $padding = '
 - `$padding` : the padding character
 
 If `$alphabet` is `PHP_BASE32_ASCII` and the `$padding` is `=`, conversion is performed per RFC4648 US-ASCII standard.
-If `$alphabet` is `PHP_BASE32_HEXC` and the `$padding` is `=`, conversion is performed per RFC4648 HEX standard.
+If `$alphabet` is `PHP_BASE32_HEX` and the `$padding` is `=`, conversion is performed per RFC4648 HEX standard.
 
 **You can provide your own alphabet of 32 characters and your own padding character.**
 
