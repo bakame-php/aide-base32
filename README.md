@@ -22,7 +22,7 @@ The package provides a userland base32 encoding and decoding mechanism.
 
 ```php
 base32_encode(string $decoded, string $alphabet = PHP_BASE32_ASCII, $padding = '='): string
-base32_decode(string $encoded, string $alphabet = PHP_BASE32_ASCII, $padding = '=', bool $strict = false): string
+base32_decode(string $encoded, string $alphabet = PHP_BASE32_ASCII, $padding = '=', bool $strict = false): string|false
 ```
 
 #### Parameters:
@@ -33,7 +33,7 @@ base32_decode(string $encoded, string $alphabet = PHP_BASE32_ASCII, $padding = '
 - `$padding` : the padding character
 - `$strict` : tell whether we need to perform strict decoding or not
 
-If the strict parameter is set to `true` then the `base32_decode` function will return `null`
+If the strict parameter is set to `true` then the `base32_decode` function will return `false`
 
 - if encoded sequence length is invalid
 - if the input contains character from outside the base64 alphabet.
@@ -57,10 +57,5 @@ base32_decode('IJQW4Z3VNE======');                        // returns 'Bangui'
 base32_decode('IJQW4Z083VNE======');                      // returns 'Bangui'
 base32_decode(encoded:'IJQW4Z083VNE======', strict: true) // return false
 base32_encode('Bangui', PHP_BASE32_HEX, '*');             // returns '89GMSPRLD4******'
-base32_decode(
-    encoded: '89GMSPRLD4******', 
-    alphabet: PHP_BASE32_HEX, 
-    padding: '*', 
-    strict: true
-);                              // returns 'Bangui'
+base32_decode('89GMSPRLD4******', PHP_BASE32_HEX, '*');   // returns 'Bangui'
 ```
