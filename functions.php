@@ -31,11 +31,11 @@ if (!function_exists('base32_decode')) {
         string $alphabet = PHP_BASE32_ASCII,
         string $padding = '=',
         bool $strict = false
-    ): ?string {
+    ): string|false {
         try {
             return (new Base32($alphabet, $padding))->decode($encoded, $strict);
         } catch (RuntimeException) {
-            return null;
+            return false;
         }
     }
 }

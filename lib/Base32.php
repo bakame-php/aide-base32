@@ -73,7 +73,7 @@ final class Base32
             if ($bitLen < 5) {
                 $bitLen += 8;
                 $offset++;
-                $val = ($val << 8) + $chars[$offset];
+                $val = ($val << 8) + $chars[$offset]; /* @phpstan-ignore-line */
             }
             $shift = $bitLen - 5;
             $encoded .= ($offset - ($bitLen > 8 ? 1 : 0) > $length && 0 === $val) ? $this->padding : $this->alphabet[$val >> $shift];
