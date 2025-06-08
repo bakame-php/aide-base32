@@ -32,8 +32,8 @@ base32_decode(string $encoded, string $alphabet = PHP_BASE32_ASCII, $padding = '
 - `$alphabet` : the base32 alphabet, by default `PHP_BASE32_ASCII`.
 - `$padding` : the padding character
 
-If `$alphabet` is `PHP_BASE32_ASCII` and the `$padding` is `=`, conversion is performed per RFC4648 US-ASCII standard.
-If `$alphabet` is `PHP_BASE32_HEX` and the `$padding` is `=`, conversion is performed per RFC4648 HEX standard.
+- If `$alphabet` is `PHP_BASE32_ASCII` and the `$padding` is `=`, conversion is performed per RFC4648 US-ASCII standard.
+- If `$alphabet` is `PHP_BASE32_HEX` and the `$padding` is `=`, conversion is performed per RFC4648 HEX standard.
 
 **You can provide your own alphabet of 32 characters and your own padding character.**
 
@@ -51,10 +51,15 @@ otherwise listed constraints are silently ignored or discarded.
 ```php
 <?php
 
-base32_encode('Bangui');                                      // returns 'IJQW4Z3VNE======'
-base32_decode('IJQW4Z3VNE======');                            // returns 'Bangui'
-base32_decode('IJQW4Z083VNE======');                          // returns 'Bangui'
-base32_decode('IJQW4Z083VNE======', PHP_BASE32_ASCII, true);  // return false
-base32_encode('Bangui', PHP_BASE32_HEX, '*');                 // returns '89GMSPRLD4******'
-base32_decode('89GMSPRLD4******', PHP_BASE32_HEX, '*', true); // returns 'Bangui'
+base32_encode('Bangui');                                  // returns 'IJQW4Z3VNE======'
+base32_decode('IJQW4Z3VNE======');                        // returns 'Bangui'
+base32_decode('IJQW4Z083VNE======');                      // returns 'Bangui'
+base32_decode(encoded:'IJQW4Z083VNE======', strict: true) // return false
+base32_encode('Bangui', PHP_BASE32_HEX, '*');             // returns '89GMSPRLD4******'
+base32_decode(
+    encoded: '89GMSPRLD4******', 
+    alphabet: PHP_BASE32_HEX, 
+    padding: '*', 
+    strict: true
+);                              // returns 'Bangui'
 ```
