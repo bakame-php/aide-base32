@@ -1,55 +1,124 @@
----
 name: build
 on:
-    push: ~
-    pull_request: ~
+  push:
+  pull_request:
 
 jobs:
-    linux_tests:
-        name: PHP on ${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.composer-flags }}
-        runs-on: ubuntu-22.04
-        strategy:
-            matrix:
-                php: ['8.1', '8.2', '8.3', '8.4']
-                stability: [prefer-lowest, prefer-stable]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  linux_tests:
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    runs-on: ubuntu-22.04
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php }}
-                  coverage: xdebug
-                  tools: composer:v2
-            - name: Check PHP Version
-              run: php -v
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        stability: [prefer-lowest, prefer-stable]
 
-            - name: Validate composer files
-              run: composer validate --strict
+    steps:
+      # ------------------------------------------------------------
+      # Checkout
+      # ------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Get Composer Cache Directory
-              id: composer-cache
-              run: |
-                  echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-            - uses: actions/cache@v3
-              with:
-                  path: ${{ steps.composer-cache.outputs.dir }}
-                  key: ${{ runner.os }}-composer-${{ matrix.stability }}-${{ matrix.flags }}-${{ hashFiles('**/composer.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-composer-${{ matrix.stability }}-${{ matrix.flags }}-
-                      ${{ runner.os }}-composer-
+      # ------------------------------------------------------------
+      # Setup PHP + Extensions Cache
+      # ------------------------------------------------------------
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+          tools: composer:v2
+          extensions: intl, mbstring, pdo_mysql
+          ini-values: opcache.jit=off
 
-            - name: Install dependencies
-              run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress ${{ matrix.flags }}
+      # ------------------------------------------------------------
+      # Debug PHP version
+      # ------------------------------------------------------------
+      - name: Check PHP Version
+        run: php -v
 
-            - name: Run Unit tests with coverage
-              run: composer phpunit -- ${{ matrix.phpunit-flags }}
+      # ------------------------------------------------------------
+      # Composer validation
+      # ------------------------------------------------------------
+      - name: Validate composer files
+        run: composer validate --strict
 
-            - name: Run static analysis
-              run: composer phpstan
-              if: ${{ matrix.php == '8.3' && matrix.stability == 'prefer-stable'}}
+      # ------------------------------------------------------------
+      # Cache Composer Files
+      # ------------------------------------------------------------
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
-            - name: Run Coding style rules
-              run: composer phpcs:fix
-              if: ${{ matrix.php == '8.3' && matrix.stability == 'prefer-stable'}}
+      - name: Composer Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.stability }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.stability }}-
+            composer-${{ runner.os }}-
+
+      # ------------------------------------------------------------
+      # Install dependencies
+      # ------------------------------------------------------------
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      # ------------------------------------------------------------
+      # PHPUnit cache
+      # ------------------------------------------------------------
+      - name: Ensure PHPUnit cache dir exists
+        run: mkdir -p .phpunit.cache
+
+      - name: Cache PHPUnit result cache
+        uses: actions/cache@v3
+        with:
+          path: .phpunit.cache
+          key: phpunit-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('phpunit.xml*') }}
+          restore-keys: |
+            phpunit-${{ runner.os }}-${{ matrix.php }}-
+
+
+      # ------------------------------------------------------------
+      # Run tests
+      # ------------------------------------------------------------
+      - name: Run Unit tests with coverage
+        run: composer phpunit
+
+      # ------------------------------------------------------------
+      # PHPStan cache
+      # ------------------------------------------------------------
+      - name: Ensure PHPStan cache dir exists
+        run: mkdir -p var/phpstan
+
+      - name: Cache PHPStan
+        uses: actions/cache@v3
+        with:
+          path: var/phpstan
+          key: phpstan-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('**/*.php') }}
+          restore-keys: |
+            phpstan-${{ runner.os }}-${{ matrix.php }}-
+
+      - name: Run static analysis
+        if: ${{ matrix.php == '8.4' && matrix.stability == 'prefer-stable' }}
+        run: composer phpstan
+
+      # ------------------------------------------------------------
+      # PHP-CS-FIXER cache
+      # ------------------------------------------------------------
+      - name: Ensure PHPStan cache dir exists
+        run: mkdir -p var/phpcs
+
+      - name: Cache PHP-CS-FIXER
+        uses: actions/cache@v3
+        with:
+          path: var/phpcs
+          key: phpcs-${{ runner.os }}-${{ matrix.php }}-${{ hashFiles('**/*.php') }}
+          restore-keys: |
+            phpcs-${{ runner.os }}-${{ matrix.php }}-
+
+      - name: Run Coding style rules
+        if: ${{ matrix.php == '8.4' && matrix.stability == 'prefer-stable' }}
+        run: composer phpcs:fix

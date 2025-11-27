@@ -1,5 +1,7 @@
 <?php
 
+use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
+
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__.'/lib')
 ;
@@ -7,6 +9,8 @@ $finder = PhpCsFixer\Finder::create()
 $config = new PhpCsFixer\Config();
 
 return $config
+    ->setUnsupportedPhpVersionAllowed(true)
+    ->setParallelConfig(ParallelConfigFactory::detect())
     ->setRules([
         '@PSR12' => true,
         'array_syntax' => ['syntax' => 'short'],

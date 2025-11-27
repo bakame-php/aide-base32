@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+use Encoding\Base32;
+use Encoding\UnableToDecodeException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use function Encoding\base32_encode;
+use function Encoding\base32_decode;
 
 /**
  * @see https://opensource.apple.com/source/tcl/tcl-87/tcl_ext/tcllib/tcllib/modules/base32/base32hex.testsuite.auto.html
@@ -23,7 +28,7 @@ final class Base32Test extends TestCase
     #[Test]
     public function it_will_base32_encode_on_hex_mode(string $decoded, string $encoded): void
     {
-        self::assertSame($encoded, base32_encode($decoded, PHP_BASE32_HEX));
+        self::assertSame($encoded, base32_encode($decoded, Base32::Hex));
     }
 
     #[DataProvider('base32decodeAsciiDataProvider')]
@@ -37,7 +42,7 @@ final class Base32Test extends TestCase
     #[Test]
     public function it_will_base32_decode_on_hex_mode(string $decoded, string $encoded): void
     {
-        self::assertSame($decoded, base32_decode($encoded, PHP_BASE32_HEX));
+        self::assertSame($decoded, base32_decode($encoded, Base32::Hex));
     }
 
     #[DataProvider('backAndForthDataProvider')]
@@ -45,7 +50,7 @@ final class Base32Test extends TestCase
     public function it_will_base32_encode_and_decode(string $string): void
     {
         self::assertSame($string, base32_decode(base32_encode($string)));
-        self::assertSame($string, base32_decode(base32_encode($string, PHP_BASE32_HEX), PHP_BASE32_HEX));
+        self::assertSame($string, base32_decode(base32_encode($string, Base32::Hex), Base32::Hex));
     }
 
     #[Test]
@@ -53,35 +58,20 @@ final class Base32Test extends TestCase
     {
         $base32 = <<<BASE
 89GMSPRL
-D4yyyyyy
+D4======
 BASE;
-        self::assertSame('Bangui', base32_decode($base32, PHP_BASE32_HEX, 'y', true));
-    }
-
-    #[Test]
-    public function it_wiil_distinguish_alphabet_on_character_casing_on_strict_mode(): void
-    {
-        $alphabet = strtolower(PHP_BASE32_ASCII);
-        $expected = 'bangui';
-
-        self::assertSame($expected, base32_decode(encoded: base32_encode($expected, $alphabet)));
-        self::assertFalse(base32_decode(encoded: base32_encode($expected, $alphabet), strict: true));
+        self::assertSame('Bangui', base32_decode($base32, Base32::Hex));
     }
 
     #[DataProvider('invalidDecodingSequence')]
     #[Test]
     public function it_will_return_false_from_invalid_encoded_string_with_base32_decode_function(
         string $sequence,
-        string $message,
-        string $alphabet,
-        string $padding
+        Base32 $alphabet,
     ): void {
-        try {
-            self::assertFalse(base32_decode($sequence, $alphabet, $padding, true));
-            /* @phpstan-ignore-line */
-        } catch (ValueError $exception) {
-            self::assertSame($message, $exception->getMessage());
-        }
+        $this->expectException(UnableToDecodeException::class);
+
+        base32_decode($sequence, $alphabet);
     }
 
     /**
@@ -115,7 +105,6 @@ BASE;
     {
         return [
             ...self::base32encodeAsciiDataProvider(),
-            'All Invalid Characters' => ['', '8908908908908908'],
             'empty Characters' => ['', '         '],
         ];
     }
@@ -150,7 +139,6 @@ BASE;
     {
         return [
             ...self::base32encodeHexDataProvider(),
-            'All Invalid Characters' => ['', 'WXYXWXYZWXYZWXYZ'],
             'empty Characters' => ['', '         '],
         ];
     }
@@ -181,114 +169,32 @@ BASE;
     {
         yield 'characters outside of base32 extended hex alphabet' => [
             'sequence' => 'MZXQ====',
-            'message' => 'The encoded string contains characters outside of the base32 alphabet.',
-            'alphabet' => PHP_BASE32_HEX,
-            'padding' => '=',
+            'alphabet' => Base32::Hex,
         ];
 
         yield 'characters outside of base32 us ascii alphabet' => [
             'sequence' => '90890808',
-            'message' => 'The encoded string contains characters outside of the base32 alphabet.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => '=',
+            'alphabet' => Base32::Ascii,
         ];
 
         yield 'characters not upper-cased' => [
             'sequence' => 'MzxQ====',
-            'message' => 'The encoded string contains lower-cased characters which is forbidden on strict mode.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => '=',
+            'alphabet' => Base32::Ascii,
         ];
 
         yield 'padding character in the middle of the sequence' => [
             'sequence' => 'A=ACA===',
-            'message' => 'A padding character is contained in the middle of the encoded string.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => '=',
+            'alphabet' => Base32::Ascii,
         ];
 
         yield 'invalid padding length' => [
-            'sequence' => 'A=======',
-            'message' => 'The encoded string contains an invalid padding length.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => '=',
+            'sequence' => 'A======',
+            'alphabet' => Base32::Ascii,
         ];
 
         yield 'invalid encoded string length' => [
             'sequence' => 'A',
-            'message' => 'The encoded string length is not a multiple of 8.',
-            'alphabet' => PHP_BASE32_HEX,
-            'padding' => '=',
-        ];
-
-        yield 'invalid alphabet length' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet must be a 32 bytes long string.',
-            'alphabet' => '1234567890asdfghjklzxcvbnm',
-            'padding' => '=',
-        ];
-
-        yield 'the padding character is contained within the alphabet' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
-            'padding' => '*',
-        ];
-
-        yield 'the padding character is contained within the alphabet is case insensitive' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => str_replace('A', '*', PHP_BASE32_ASCII),
-            'padding' => 'a',
-        ];
-
-        yield 'the padding character is different than one byte' => [
-            'sequence' => 'A',
-            'message' => 'The padding character must be a non-reserved single byte character.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => 'yo',
-        ];
-
-        yield 'the padding character can not contain "\r"' => [
-            'sequence' => 'A',
-            'message' => 'The padding character must be a non-reserved single byte character.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => "\r",
-        ];
-
-        yield 'the padding character can not contain "\n"' => [
-            'sequence' => 'A',
-            'message' => 'The padding character must be a non-reserved single byte character.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => "\n",
-        ];
-
-        yield 'the padding character can not contain "\t"' => [
-            'sequence' => 'A',
-            'message' => 'The padding character must be a non-reserved single byte character.',
-            'alphabet' => PHP_BASE32_ASCII,
-            'padding' => "\t",
-        ];
-
-        yield 'the alphabet can not contain "\r"' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_ASCII, 0, -1) . "\r",
-            'padding' => '=',
-        ];
-
-        yield 'the alphabet can not contain "\n"' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_HEX, 0, -1) . "\n",
-            'padding' => '=',
-        ];
-
-        yield 'the alphabet can not contain "\t"' => [
-            'sequence' => 'A',
-            'message' => 'The alphabet can not contain a reserved character.',
-            'alphabet' => substr(PHP_BASE32_HEX, 0, -1) . "\t",
-            'padding' => '=',
+            'alphabet' => Base32::Ascii,
         ];
     }
 }

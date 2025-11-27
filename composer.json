@@ -27,23 +27,29 @@
         "php" : "^8.1"
     },
     "require-dev": {
+        "bakame/stackwatch": "^0.15.0",
         "friendsofphp/php-cs-fixer": "^3.75.0",
         "phpstan/phpstan": "^2.1.17",
-        "phpstan/phpstan-strict-rules": "^2.0.4",
-        "phpstan/phpstan-phpunit": "^2.0.6",
         "phpstan/phpstan-deprecation-rules": "^2.0.3",
+        "phpstan/phpstan-phpunit": "^2.0.6",
+        "phpstan/phpstan-strict-rules": "^2.0.4",
         "phpunit/phpunit": "^10.5.15 || ^11.5.22 || ^12.2.1",
         "symfony/var-dumper": "^6.4.21"
     },
     "autoload": {
         "psr-4": {
-            "Bakame\\Aide\\Base32\\": "lib"
+            "Bakame\\Aide\\Polyfill\\": "src"
         },
-        "files": ["functions.php"]
+        "classmap": [
+          "lib"
+        ],
+        "files": [
+          "lib/functions.php"
+        ]
     },
     "scripts": {
         "benchmark": "phpbench run src --report=default",
-        "phpcs": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix -vvv --diff --dry-run --allow-risky=yes --ansi",
+        "phpcs": "php-cs-fixer fix -vvv --diff --dry-run --allow-risky=yes --ansi",
         "phpcs:fix": "php-cs-fixer fix -vvv --allow-risky=yes --ansi",
         "phpstan": "phpstan analyse -c phpstan.neon --ansi --memory-limit=192M",
         "phpunit": "XDEBUG_MODE=coverage phpunit --coverage-text",
